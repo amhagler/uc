@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit Planner</title>
+    <style>
+        body {
+            font-family: Garamond, serif;
+            background-color: #ececec;
+            color: #2D68C4;
+            padding: 20px;
+            margin: 0;
+            line-height: 1; /* No extra spacing after lines */
+            font-size: 11px; /* Set default font size to 11 */
+        }
+        h1, h2 {
+            color: #2D68C4;
+            text-align: center; /* Center align titles */
+        }
+        form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center; /* Center align form elements */
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .block-selection {
+            width: 100%;
+            text-align: center;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            text-align: center; /* Center align labels */
+        }
+        input, select, button {
+            padding: 10px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            max-width: 650px; /* Width to fit on an 8.5" x 11" page */
+            margin: 0 auto;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #000; /* Black border */
+            padding: 8px;
+            text-align: center;
+            font-size: 11px; /* Default font size */
+        }
+        th {
+            background-color: #2D68C4;
+            color: white;
+        }
+        .blue-week {
+            background-color: #B3CDE0;
+        }
+        .gold-week {
+            background-color: #FBE6C5;
+        }
+        .checkbox-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center; /* Center align checkboxes */
+        }
+        .checkbox-container label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .custom-checkbox {
+            position: relative;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #2D68C4;
+            border-radius: 4px;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .custom-checkbox.checked::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 12px;
+            height: 12px;
+            background-color: #2D68C4;
+            border-radius: 2px;
+        }
+        .hidden-input {
+            display: none;
+        }
+        .copy-button-container {
+            text-align: center; /* Center the copy button */
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Unit Calendar Planner</h1>
+    <form id="calendar-form">
+        <div>
+            <label for="start-date">Start Date:</label>
+            <input type="date" id="start-date" name="start-date" required>
+        </div>
+        <div>
+            <label for="end-date">End Date:</label>
+            <input type="date" id="end-date" name="end-date" required>
+        </div>
+        <div>
+            <label for="start-week">Starting Week:</label>
+            <select id="start-week" name="start-week" required>
+                <option value="blue">Blue Week</option>
+                <option value="gold">Gold Week</option>
+            </select>
+        </div>
+        <div class="block-selection">
+            <label>Select Blocks:</label>
+            <div class="checkbox-container">
+                <label><span class="custom-checkbox" data-block="A"></span><span>A Block</span></label>
+                <label><span class="custom-checkbox" data-block="B"></span><span>B Block</span></label>
+                <label><span class="custom-checkbox" data-block="C"></span><span>C Block</span></label>
+                <label><span class="custom-checkbox" data-block="D"></span><span>D Block</span></label>
+                <label><span class="custom-checkbox" data-block="E"></span><span>E Block</span></label>
+                <label><span class="custom-checkbox" data-block="F"></span><span>F Block</span></label>
+                <label><span class="custom-checkbox" data-block="G"></span><span>G Block</span></label>
+            </div>
+            <div class="hidden-inputs">
+                <input type="checkbox" id="block-A" name="block" value="A" class="hidden-input">
+                <input type="checkbox" id="block-B" name="block" value="B" class="hidden-input">
+                <input type="checkbox" id="block-C" name="block" value="C" class="hidden-input">
+                <input type="checkbox" id="block-D" name="block" value="D" class="hidden-input">
+                <input type="checkbox" id="block-E" name="block" value="E" class="hidden-input">
+                <input type="checkbox" id="block-F" name="block" value="F" class="hidden-input">
+                <input type="checkbox" id="block-G" name="block" value="G" class="hidden-input">
+            </div>
+        </div>
+        <button type="button" onclick="generateUnitCalendar()">Generate Unit Calendar</button>
+    </form>
+
+    <table id="unit-calendar">
+        <thead>
+            <tr>
+                <th>Class Number</th>
+                <th>Day/Date</th>
+                <th>Topic</th>
+                <th>In-class</th>
+                <th>Homework</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+    
+    <div class="copy-button-container">
+        <button id="copy-button" style="display: none;" onclick="copyTable()">Copy Table</button>
+    </div>
+
+    <script>
+        document.querySelectorAll('.custom-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('click', function() {
+                this.classList.toggle('checked');
+                const block = this.getAttribute('data-block');
+                const hiddenInput = document.getElementById(`block-${block}`);
+                hiddenInput.checked = !hiddenInput.checked;
+            });
+        });
+
+        function generateUnitCalendar() {
+            const startDateInput = document.getElementById('start-date').value;
+            const endDateInput = document.getElementById('end-date').value;
+            const startWeek = document.getElementById('start-week').value;
+
+            if (!startDateInput || !endDateInput) {
+                alert('Please enter both start and end dates.');
+                return;
+            }
+
+            const startDate = new Date(startDateInput);
+            const endDate = new Date(endDateInput);
+
+            if (startDate > endDate) {
+                alert('Start date must be before end date.');
+                return;
+            }
+
+            const selectedBlocks = Array.from(document.querySelectorAll('input[name="block"]:checked')).map(checkbox => checkbox.value);
+            if (selectedBlocks.length === 0) {
+                alert('Please select at least one block.');
+                return;
+            }
+
+            const calendarTable = document.getElementById('unit-calendar').getElementsByTagName('tbody')[0];
+            calendarTable.innerHTML = ''; // Clear existing calendar data
+
+            const weekDays = ['M', 'T', 'W', 'Th', 'F'];
+            const blueWeek = {
+                "monday": ["A", "B", "C", "D", "E"],
+                "tuesday": ["F", "G", "A", "B", "C"],
+                "wednesday": ["D", "E", "F", "G", "A"],
+                "thursday": ["B", "C", "D", "E", "F"],
+                "friday": ["G", "A", "B", "C", "D"]
+            };
+            const goldWeek = {
+                "monday": ["E", "F", "G", "A", "B"],
+                "tuesday": ["C", "D", "E", "F", "G"],
+                "wednesday": ["A", "B", "C", "D", "E"],
+                "thursday": ["F", "G", "A", "B", "C"],
+                "friday": ["D", "E", "F", "G"]
+            };
+
+            const scheduleData = { blue: blueWeek, gold: goldWeek };
+            let currentWeek = startWeek;
+
+            let currentDate = new Date(startDate);
+            let lessonSchedule = {};
+
+            // Collect block data for each day within the range
+            while (currentDate <= endDate) {
+                const dayOfWeek = currentDate.getDay();
+                if (dayOfWeek === 0 || dayOfWeek === 6) { // Skip weekends
+                    currentDate.setDate(currentDate.getDate() + 1);
+                    continue;
+                }
+
+                const weekDayName = Object.keys(scheduleData[currentWeek])[dayOfWeek - 1];
+                const scheduleForDay = scheduleData[currentWeek][weekDayName];
+                const dateStr = `${weekDays[dayOfWeek - 1]} ${currentDate.getMonth() + 1}/${currentDate.getDate()}`;
+
+                scheduleForDay.forEach(block => {
+                    if (selectedBlocks.includes(block)) {
+                        if (!lessonSchedule[block]) {
+                            lessonSchedule[block] = [];
+                        }
+                        lessonSchedule[block].push({ date: dateStr, week: currentWeek });
+                    }
+                });
+
+                // Switch weeks after Friday
+                if (dayOfWeek === 5) {
+                    currentWeek = currentWeek === 'blue' ? 'gold' : 'blue';
+                }
+
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            // Determine the maximum number of lessons in any block
+            const maxLessons = Math.max(...Object.values(lessonSchedule).map(blockSchedule => blockSchedule.length));
+
+            // Generate rows for each class number
+            let classNumber = 1;
+            for (let i = 0; i < maxLessons; i++) {
+                let dateEntries = [];
+                let weekType = null;
+                let uniqueDates = new Set();
+
+                selectedBlocks.forEach(block => {
+                    if (lessonSchedule[block] && lessonSchedule[block][i]) {
+                        const lesson = lessonSchedule[block][i];
+                        uniqueDates.add(lesson.date);
+                        if (!weekType) {
+                            weekType = lesson.week;
+                        }
+                    }
+                });
+
+                // If all blocks have the same date, show it once without block indicator
+                if (uniqueDates.size === 1) {
+                    dateEntries = Array.from(uniqueDates);
+                } else {
+                    selectedBlocks.forEach(block => {
+                        if (lessonSchedule[block] && lessonSchedule[block][i]) {
+                            const lesson = lessonSchedule[block][i];
+                            dateEntries.push(`${lesson.date}${selectedBlocks.length > 1 ? ` (${block})` : ''}`);
+                        }
+                    });
+                }
+
+                const row = calendarTable.insertRow();
+                const cell1 = row.insertCell(0);
+                const cell2 = row.insertCell(1);
+                const cell3 = row.insertCell(2);
+                const cell4 = row.insertCell(3);
+                const cell5 = row.insertCell(4);
+
+                cell1.textContent = classNumber++;
+                cell2.innerHTML = dateEntries.join('<br>'); // Use line breaks for multiple dates
+                cell3.textContent = '';
+                cell4.textContent = '';
+                cell5.textContent = '';
+
+                // Apply the correct week coloring
+                row.className = weekType === 'blue' ? 'blue-week' : 'gold-week';
+            }
+
+            // Show the copy button
+            document.getElementById('copy-button').style.display = 'block';
+        }
+
+        function copyTable() {
+            const table = document.getElementById('unit-calendar');
+            const range = document.createRange();
+            const selection = window.getSelection();
+
+            range.selectNodeContents(table);
+            selection.removeAllRanges();
+            selection.addRange(range);
+
+            try {
+                document.execCommand('copy');
+                alert('Table copied to clipboard');
+            } catch (err) {
+                alert('Failed to copy table');
+            }
+        }
+    </script>
+</body>
+</html>
