@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unit Planner</title>
+    <title>Unit Planner with Holidays</title>
     <style>
         body {
             font-family: Garamond, serif;
@@ -11,18 +11,18 @@
             color: #2D68C4;
             padding: 20px;
             margin: 0;
-            line-height: 1; /* No extra spacing after lines */
-            font-size: 11px; /* Set default font size to 11 */
+            line-height: 1;
+            font-size: 11px;
         }
         h1, h2 {
             color: #2D68C4;
-            text-align: center; /* Center align titles */
+            text-align: center;
         }
         form {
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
-            justify-content: center; /* Center align form elements */
+            justify-content: center;
             align-items: center;
             margin-bottom: 20px;
         }
@@ -33,7 +33,7 @@
         label {
             display: block;
             margin-bottom: 5px;
-            text-align: center; /* Center align labels */
+            text-align: center;
         }
         input, select, button {
             padding: 10px;
@@ -42,16 +42,16 @@
         }
         table {
             width: 100%;
-            max-width: 650px; /* Width to fit on an 8.5" x 11" page */
+            max-width: 650px;
             margin: 0 auto;
             border-collapse: collapse;
             margin-top: 20px;
         }
         th, td {
-            border: 1px solid #000; /* Black border */
+            border: 1px solid #000;
             padding: 8px;
             text-align: center;
-            font-size: 11px; /* Default font size */
+            font-size: 11px;
         }
         th {
             background-color: #2D68C4;
@@ -63,56 +63,98 @@
         .gold-week {
             background-color: #FBE6C5;
         }
+        .holiday-row {
+            background-color: #D3D3D3;
+            color: black;
+        }
         .checkbox-container {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
-            justify-content: center; /* Center align checkboxes */
+            justify-content: center;
         }
-        .checkbox-container label {
+        .block-checkbox {
             display: flex;
             align-items: center;
             gap: 5px;
         }
-        .custom-checkbox {
-            position: relative;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #2D68C4;
-            border-radius: 4px;
-            display: inline-block;
-            cursor: pointer;
+        .copy-button-container {
+            text-align: center;
+            margin-top: 20px;
         }
-        .custom-checkbox.checked::before {
-            content: '';
-            position: absolute;
+        #popup {
+            display: none;
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 12px;
-            height: 12px;
+            width: 400px;
+            background-color: white;
+            border: 1px solid #000;
+            padding: 20px;
+            z-index: 1000;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        #popup h3 {
+            text-align: center;
+        }
+        #popup p {
+            font-size: 12px;
+            margin: 10px 0;
+        }
+        #close-popup {
+            display: block;
+            margin: 20px auto 0;
+            padding: 10px;
             background-color: #2D68C4;
-            border-radius: 2px;
+            color: white;
+            border: none;
+            cursor: pointer;
         }
-        .hidden-input {
+        #popup-overlay {
             display: none;
-        }
-        .copy-button-container {
-            text-align: center; /* Center the copy button */
-            margin-top: 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 500;
         }
     </style>
 </head>
 <body>
-    <h1>Unit Calendar Planner</h1>
+    <h1>Unit Planner with Holidays</h1>
+    
+    <div class="popup-button-container" style="text-align: center;">
+        <button onclick="showPopup()">Instructions and Disclaimers</button>
+    </div>
+
     <form id="calendar-form">
         <div>
             <label for="start-date">Start Date:</label>
             <input type="date" id="start-date" name="start-date" required>
         </div>
         <div>
+            <label for="end-class-count">End by:</label>
+            <select id="end-option" name="end-option" onchange="toggleEndInput()">
+                <option value="date">End Date</option>
+                <option value="class-count">Number of Classes</option>
+            </select>
+        </div>
+        <div id="end-date-container">
             <label for="end-date">End Date:</label>
-            <input type="date" id="end-date" name="end-date" required>
+            <input type="date" id="end-date" name="end-date">
+        </div>
+        <div id="class-count-container" style="display: none;">
+            <label for="class-count">Number of Classes:</label>
+            <input type="number" id="class-count" name="class-count" min="1">
+        </div>
+        <div>
+            <label for="holiday-dates">Holiday Dates:</label>
+            <input type="date" id="holiday-dates">
+            <button type="button" onclick="addHoliday()">Add Holiday</button>
+            <ul id="holiday-list"></ul>
         </div>
         <div>
             <label for="start-week">Starting Week:</label>
@@ -124,22 +166,13 @@
         <div class="block-selection">
             <label>Select Blocks:</label>
             <div class="checkbox-container">
-                <label><span class="custom-checkbox" data-block="A"></span><span>A Block</span></label>
-                <label><span class="custom-checkbox" data-block="B"></span><span>B Block</span></label>
-                <label><span class="custom-checkbox" data-block="C"></span><span>C Block</span></label>
-                <label><span class="custom-checkbox" data-block="D"></span><span>D Block</span></label>
-                <label><span class="custom-checkbox" data-block="E"></span><span>E Block</span></label>
-                <label><span class="custom-checkbox" data-block="F"></span><span>F Block</span></label>
-                <label><span class="custom-checkbox" data-block="G"></span><span>G Block</span></label>
-            </div>
-            <div class="hidden-inputs">
-                <input type="checkbox" id="block-A" name="block" value="A" class="hidden-input">
-                <input type="checkbox" id="block-B" name="block" value="B" class="hidden-input">
-                <input type="checkbox" id="block-C" name="block" value="C" class="hidden-input">
-                <input type="checkbox" id="block-D" name="block" value="D" class="hidden-input">
-                <input type="checkbox" id="block-E" name="block" value="E" class="hidden-input">
-                <input type="checkbox" id="block-F" name="block" value="F" class="hidden-input">
-                <input type="checkbox" id="block-G" name="block" value="G" class="hidden-input">
+                <label class="block-checkbox"><input type="checkbox" id="block-A" name="block" value="A"> A Block</label>
+                <label class="block-checkbox"><input type="checkbox" id="block-B" name="block" value="B"> B Block</label>
+                <label class="block-checkbox"><input type="checkbox" id="block-C" name="block" value="C"> C Block</label>
+                <label class="block-checkbox"><input type="checkbox" id="block-D" name="block" value="D"> D Block</label>
+                <label class="block-checkbox"><input type="checkbox" id="block-E" name="block" value="E"> E Block</label>
+                <label class="block-checkbox"><input type="checkbox" id="block-F" name="block" value="F"> F Block</label>
+                <label class="block-checkbox"><input type="checkbox" id="block-G" name="block" value="G"> G Block</label>
             </div>
         </div>
         <button type="button" onclick="generateUnitCalendar()">Generate Unit Calendar</button>
@@ -163,33 +196,86 @@
         <button id="copy-button" style="display: none;" onclick="copyTable()">Copy Table</button>
     </div>
 
+    <div id="popup-overlay"></div>
+
+    <div id="popup">
+        <h3>Instructions and Disclaimers</h3>
+        <p>This unit calendar generator is designed for Geffen Academy's schedule. Be aware of the following bugs, which require some care:</p>
+        <p>1. When holidays are entered, sometimes the fields adjacent to the holidays generate extra dates. These can just be deleted. I don't know why this is happening.</p>
+        <p>2. If you are using the "Number of Classes" function, always add more classes than you think you need to make sure the calendar generates all possible meetings for the classes.</p>
+        <p>3. Always double check against Geffen's master calendar. This is designed to be a time saving tool, but the program is only as smart as its programmer. Be prepared to shift dates around as necessary.</p>
+        <button id="close-popup" onclick="closePopup()">Close</button>
+    </div>
+
     <script>
-        document.querySelectorAll('.custom-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('click', function() {
-                this.classList.toggle('checked');
-                const block = this.getAttribute('data-block');
-                const hiddenInput = document.getElementById(`block-${block}`);
-                hiddenInput.checked = !hiddenInput.checked;
-            });
-        });
+        let holidays = [];
+
+        function toggleEndInput() {
+            const endOption = document.getElementById('end-option').value;
+            const endDateContainer = document.getElementById('end-date-container');
+            const classCountContainer = document.getElementById('class-count-container');
+
+            if (endOption === 'date') {
+                endDateContainer.style.display = 'block';
+                classCountContainer.style.display = 'none';
+                document.getElementById('end-date').required = true;
+                document.getElementById('class-count').required = false;
+            } else {
+                endDateContainer.style.display = 'none';
+                classCountContainer.style.display = 'block';
+                document.getElementById('end-date').required = false;
+                document.getElementById('class-count').required = true;
+            }
+        }
+
+        function addHoliday() {
+            const holidayInput = document.getElementById('holiday-dates').value;
+            if (holidayInput) {
+                holidays.push(holidayInput);
+                const listItem = document.createElement('li');
+                listItem.textContent = holidayInput;
+                document.getElementById('holiday-list').appendChild(listItem);
+                document.getElementById('holiday-dates').value = '';
+            }
+        }
+
+        function formatDateToString(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function parseDateFromString(dateStr) {
+            const [year, month, day] = dateStr.split('-').map(Number);
+            return new Date(year, month - 1, day);
+        }
 
         function generateUnitCalendar() {
             const startDateInput = document.getElementById('start-date').value;
-            const endDateInput = document.getElementById('end-date').value;
+            const endOption = document.getElementById('end-option').value;
+            let endDateInput = document.getElementById('end-date').value;
+            let classCountInput = parseInt(document.getElementById('class-count').value);
             const startWeek = document.getElementById('start-week').value;
 
-            if (!startDateInput || !endDateInput) {
-                alert('Please enter both start and end dates.');
+            if (!startDateInput) {
+                alert('Please enter a start date.');
                 return;
             }
 
-            const startDate = new Date(startDateInput);
-            const endDate = new Date(endDateInput);
+            const startDate = parseDateFromString(startDateInput);
 
-            if (startDate > endDate) {
-                alert('Start date must be before end date.');
+            if (endOption === 'date' && !endDateInput) {
+                alert('Please enter an end date.');
                 return;
             }
+
+            if (endOption === 'class-count' && !classCountInput) {
+                alert('Please enter the number of classes.');
+                return;
+            }
+
+            const endDate = endOption === 'date' ? parseDateFromString(endDateInput) : null;
 
             const selectedBlocks = Array.from(document.querySelectorAll('input[name="block"]:checked')).map(checkbox => checkbox.value);
             if (selectedBlocks.length === 0) {
@@ -218,13 +304,29 @@
 
             const scheduleData = { blue: blueWeek, gold: goldWeek };
             let currentWeek = startWeek;
-
-            let currentDate = new Date(startDate);
+            let currentDate = startDate;
             let lessonSchedule = {};
+            let classNumber = 1;
+            let dateEntries = [];
 
-            // Collect block data for each day within the range
-            while (currentDate <= endDate) {
+            let totalClassesGenerated = 0;
+
+            while ((endOption === 'date' && currentDate <= endDate) || 
+                   (endOption === 'class-count' && totalClassesGenerated < classCountInput * selectedBlocks.length)) {
                 const dayOfWeek = currentDate.getDay();
+                const formattedDate = formatDateToString(currentDate);
+
+                // Add holidays to the dateEntries array
+                if (holidays.includes(formattedDate)) {
+                    dateEntries.push({
+                        type: 'holiday',
+                        date: formattedDate,
+                        displayDate: `${weekDays[dayOfWeek - 1]} ${currentDate.getMonth() + 1}/${currentDate.getDate()}`,
+                    });
+                    currentDate.setDate(currentDate.getDate() + 1);
+                    continue;
+                }
+
                 if (dayOfWeek === 0 || dayOfWeek === 6) { // Skip weekends
                     currentDate.setDate(currentDate.getDate() + 1);
                     continue;
@@ -235,70 +337,103 @@
                 const dateStr = `${weekDays[dayOfWeek - 1]} ${currentDate.getMonth() + 1}/${currentDate.getDate()}`;
 
                 scheduleForDay.forEach(block => {
-                    if (selectedBlocks.includes(block)) {
+                    if (selectedBlocks.includes(block) && 
+                        ((endOption === 'date' && currentDate <= endDate) || 
+                         (endOption === 'class-count' && totalClassesGenerated < classCountInput * selectedBlocks.length))) {
+                        
                         if (!lessonSchedule[block]) {
                             lessonSchedule[block] = [];
                         }
-                        lessonSchedule[block].push({ date: dateStr, week: currentWeek });
+
+                        if (!lessonSchedule[block][classNumber]) {
+                            lessonSchedule[block][classNumber] = [];
+                        }
+
+                        lessonSchedule[block][classNumber].push({ date: formattedDate, displayDate: dateStr, week: currentWeek });
+                        totalClassesGenerated++;
                     }
                 });
 
-                // Switch weeks after Friday
-                if (dayOfWeek === 5) {
+                if (dayOfWeek === 5) { // After Friday, switch weeks
                     currentWeek = currentWeek === 'blue' ? 'gold' : 'blue';
                 }
 
                 currentDate.setDate(currentDate.getDate() + 1);
-            }
 
-            // Determine the maximum number of lessons in any block
-            const maxLessons = Math.max(...Object.values(lessonSchedule).map(blockSchedule => blockSchedule.length));
-
-            // Generate rows for each class number
-            let classNumber = 1;
-            for (let i = 0; i < maxLessons; i++) {
-                let dateEntries = [];
-                let weekType = null;
-                let uniqueDates = new Set();
-
-                selectedBlocks.forEach(block => {
-                    if (lessonSchedule[block] && lessonSchedule[block][i]) {
-                        const lesson = lessonSchedule[block][i];
-                        uniqueDates.add(lesson.date);
-                        if (!weekType) {
-                            weekType = lesson.week;
-                        }
-                    }
-                });
-
-                // If all blocks have the same date, show it once without block indicator
-                if (uniqueDates.size === 1) {
-                    dateEntries = Array.from(uniqueDates);
-                } else {
-                    selectedBlocks.forEach(block => {
-                        if (lessonSchedule[block] && lessonSchedule[block][i]) {
-                            const lesson = lessonSchedule[block][i];
-                            dateEntries.push(`${lesson.date}${selectedBlocks.length > 1 ? ` (${block})` : ''}`);
-                        }
-                    });
+                // If all blocks have had this class number, increment class number
+                const allBlocksCompleted = selectedBlocks.every(block => lessonSchedule[block] && lessonSchedule[block][classNumber]);
+                if (allBlocksCompleted) {
+                    classNumber++;
                 }
 
-                const row = calendarTable.insertRow();
-                const cell1 = row.insertCell(0);
-                const cell2 = row.insertCell(1);
-                const cell3 = row.insertCell(2);
-                const cell4 = row.insertCell(3);
-                const cell5 = row.insertCell(4);
-
-                cell1.textContent = classNumber++;
-                cell2.innerHTML = dateEntries.join('<br>'); // Use line breaks for multiple dates
-                cell3.textContent = '';
-                cell4.textContent = '';
-                cell5.textContent = '';
-
-                // Apply the correct week coloring
-                row.className = weekType === 'blue' ? 'blue-week' : 'gold-week';
+                if (endOption === 'class-count' && totalClassesGenerated >= classCountInput * selectedBlocks.length) {
+                    break;
+                }
             }
+
+            // Add the holidays and class dates to dateEntries
+            Object.keys(lessonSchedule).forEach(block => {
+                Object.keys(lessonSchedule[block]).forEach(classNum => {
+                    dateEntries.push({
+                        type: 'class',
+                        classNum,
+                        block,
+                        dates: lessonSchedule[block][classNum]
+                    });
+                });
+            });
+
+            // Sort the dateEntries array by date
+            dateEntries.sort((a, b) => parseDateFromString(a.dates ? a.dates[0].date : a.date) - parseDateFromString(b.dates ? b.dates[0].date : b.date));
+
+            // Group by class number
+            let groupedClasses = {};
+            dateEntries.forEach(entry => {
+                if (entry.type === 'class') {
+                    if (!groupedClasses[entry.classNum]) {
+                        groupedClasses[entry.classNum] = [];
+                    }
+                    groupedClasses[entry.classNum].push(...entry.dates.map(date => `${date.displayDate} (${entry.block})`));
+                }
+            });
+
+            // Generate the rows in the table
+            dateEntries.forEach(entry => {
+                const row = calendarTable.insertRow();
+                
+                if (entry.type === 'holiday') {
+                    row.className = 'holiday-row';
+                    const cell1 = row.insertCell(0);
+                    const cell2 = row.insertCell(1);
+                    const cell3 = row.insertCell(2);
+                    const cell4 = row.insertCell(3);
+                    const cell5 = row.insertCell(4);
+
+                    cell1.textContent = '-';
+                    cell2.textContent = `${entry.displayDate} (Holiday)`;
+                    cell3.textContent = 'Holiday';
+                    cell4.textContent = '';
+                    cell5.textContent = '';
+                } else if (entry.type === 'class' && groupedClasses[entry.classNum]) {
+                    const rowClass = entry.dates[0].week === 'blue' ? 'blue-week' : 'gold-week';
+                    row.className = rowClass;
+
+                    const cell1 = row.insertCell(0);
+                    const cell2 = row.insertCell(1);
+                    const cell3 = row.insertCell(2);
+                    const cell4 = row.insertCell(3);
+                    const cell5 = row.insertCell(4);
+
+                    cell1.textContent = entry.classNum;
+                    cell2.innerHTML = groupedClasses[entry.classNum].join('<br>');
+                    cell3.textContent = '';
+                    cell4.textContent = '';
+                    cell5.textContent = '';
+
+                    // Remove the grouped class to avoid duplication
+                    delete groupedClasses[entry.classNum];
+                }
+            });
 
             // Show the copy button
             document.getElementById('copy-button').style.display = 'block';
@@ -319,6 +454,16 @@
             } catch (err) {
                 alert('Failed to copy table');
             }
+        }
+
+        function showPopup() {
+            document.getElementById('popup-overlay').style.display = 'block';
+            document.getElementById('popup').style.display = 'block';
+        }
+
+        function closePopup() {
+            document.getElementById('popup-overlay').style.display = 'none';
+            document.getElementById('popup').style.display = 'none';
         }
     </script>
 </body>
