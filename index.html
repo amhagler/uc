@@ -425,8 +425,29 @@
                 }
             });
 
+            // Now handle merging rows with the same class number
+            mergeTableRows('unit-calendar', 0);
+
             // Show the copy button
             document.getElementById('copy-button').style.display = 'block';
+        }
+
+        function mergeTableRows(tableID, columnIndex) {
+            const table = document.getElementById(tableID);
+            let rowSpan = 1;
+
+            for (let i = 1; i < table.rows.length; i++) {
+                const currentCell = table.rows[i].cells[columnIndex];
+                const previousCell = table.rows[i - 1].cells[columnIndex];
+
+                if (currentCell.innerHTML === previousCell.innerHTML) {
+                    rowSpan++;
+                    currentCell.remove();
+                    previousCell.rowSpan = rowSpan;
+                } else {
+                    rowSpan = 1;
+                }
+            }
         }
 
         function copyTable() {
