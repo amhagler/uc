@@ -216,9 +216,9 @@
     <div id="popup">
         <h3>Instructions and Disclaimers</h3>
         <p>This unit calendar generator is designed for Geffen Academy's schedule. Be aware of the following bugs, which require some care:</p>
-        <p>1.Holidays are generated out of order.</p>
+        <p>1. When holidays are entered, sometimes the fields adjacent to the holidays generate extra dates. These can just be deleted. I don't know why this is happening.</p>
         <p>2. If you are using the "Number of Classes" function, always add more classes than you think you need to make sure the calendar generates all possible meetings for the classes.</p>
-        <p>3. It is creating two lines for each class number. I am working on a way to merge the appropriate cells automatically. For now, it must be done manually.</p>
+        <p>3. Always double-check against Geffen's master calendar. This is designed to be a time-saving tool, but the program is only as smart as its programmer. Be prepared to shift dates around as necessary.</p>
         <button id="close-popup" onclick="closePopup()">Close</button>
     </div>
 
@@ -258,7 +258,7 @@
             const year = date.getUTCFullYear();
             const month = String(date.getUTCMonth() + 1).padStart(2, '0');
             const day = String(date.getUTCDate()).padStart(2, '0');
-            return ${year}-${month}-${day};
+            return `${year}-${month}-${day}`;
         }
 
         function parseDateFromString(dateStr) {
@@ -335,7 +335,7 @@
                     dateEntries.push({
                         type: 'holiday',
                         date: formattedDate,
-                        displayDate: ${weekDays[dayOfWeek - 1]} ${currentDate.getUTCMonth() + 1}/${currentDate.getUTCDate()},
+                        displayDate: `${weekDays[dayOfWeek - 1]} ${currentDate.getUTCMonth() + 1}/${currentDate.getUTCDate()}`,
                     });
                     currentDate.setUTCDate(currentDate.getUTCDate() + 1);
                     continue;
@@ -348,7 +348,7 @@
 
                 const weekDayName = Object.keys(scheduleData[currentWeek])[dayOfWeek - 1];
                 const scheduleForDay = scheduleData[currentWeek][weekDayName];
-                const dateStr = ${weekDays[dayOfWeek - 1]} ${currentDate.getUTCMonth() + 1}/${currentDate.getUTCDate()};
+                const dateStr = `${weekDays[dayOfWeek - 1]} ${currentDate.getUTCMonth() + 1}/${currentDate.getUTCDate()}`;
 
                 scheduleForDay.forEach(block => {
                     if (selectedBlocks.includes(block) && !blocksForCurrentClass.includes(block)) {
@@ -403,7 +403,7 @@
                     const cell5 = row.insertCell(4);
 
                     cell1.textContent = '-';
-                    cell2.textContent = ${entry.displayDate} (Holiday);
+                    cell2.textContent = `${entry.displayDate} (Holiday)`;
                     cell3.textContent = 'Holiday';
                     cell4.textContent = '';
                     cell5.textContent = '';
@@ -418,7 +418,7 @@
                     const cell5 = row.insertCell(4);
 
                     cell1.textContent = entry.classNum;
-                    cell2.textContent = ${entry.displayDate} (${entry.block});
+                    cell2.textContent = `${entry.displayDate} (${entry.block})`;
                     cell3.textContent = '';
                     cell4.textContent = '';
                     cell5.textContent = '';
