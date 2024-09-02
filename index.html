@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unit Planner with Holidays</title>
+    <title>Unit Planner with Catch Up Days</title>
     <style>
         body {
             font-family: Garamond, serif;
@@ -27,8 +27,11 @@
             margin-bottom: 20px;
         }
         .block-selection {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
             width: 100%;
-            text-align: center;
+            margin-bottom: 20px;
         }
         label {
             display: block;
@@ -50,6 +53,10 @@
         }
         button:hover {
             background-color: #1E4F8E;
+        }
+        input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
         }
         table {
             width: 100%;
@@ -80,27 +87,31 @@
         }
         .checkbox-container {
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
+            flex-direction: column;
+            justify-content: space-between;
+            margin-left: 10px;
+            margin-right: 10px;
         }
-        .block-checkbox {
+        .catch-up-checkbox {
             display: flex;
             align-items: center;
-            gap: 10px;
+            height: 35px;
+            margin-bottom: 5px;
         }
-        .block-checkbox input {
-            width: 20px;
-            height: 20px;
+        .catch-up-checkbox input {
+            margin-right: 10px;
         }
-        .copy-button-container {
+        .button-container {
             text-align: center;
             margin-top: 20px;
+        }
+        .button-container button {
+            margin-right: 10px;
         }
     </style>
 </head>
 <body>
-    <h1>Unit Planner with Holidays</h1>
+    <h1>Unit Planner with Catch Up Days</h1>
 
     <form id="calendar-form">
         <div>
@@ -136,40 +147,47 @@
             </select>
         </div>
         <div class="block-selection">
-            <label>Select Blocks:</label>
-            <div class="checkbox-container">
-                <label class="block-checkbox"><input type="checkbox" id="block-A" name="block" value="A"> A Block</label>
-                <label class="block-checkbox"><input type="checkbox" id="block-B" name="block" value="B"> B Block</label>
-                <label class="block-checkbox"><input type="checkbox" id="block-C" name="block" value="C"> C Block</label>
-                <label class="block-checkbox"><input type="checkbox" id="block-D" name="block" value="D"> D Block</label>
-                <label class="block-checkbox"><input type="checkbox" id="block-E" name="block" value="E"> E Block</label>
-                <label class="block-checkbox"><input type="checkbox" id="block-F" name="block" value="F"> F Block</label>
-                <label class="block-checkbox"><input type="checkbox" id="block-G" name="block" value="G"> G Block</label>
-            </div>
+            <label class="block-checkbox"><input type="checkbox" id="block-A" name="block" value="A"> A Block</label>
+            <label class="block-checkbox"><input type="checkbox" id="block-B" name="block" value="B"> B Block</label>
+            <label class="block-checkbox"><input type="checkbox" id="block-C" name="block" value="C"> C Block</label>
+            <label class="block-checkbox"><input type="checkbox" id="block-D" name="block" value="D"> D Block</label>
+            <label class="block-checkbox"><input type="checkbox" id="block-E" name="block" value="E"> E Block</label>
+            <label class="block-checkbox"><input type="checkbox" id="block-F" name="block" value="F"> F Block</label>
+            <label class="block-checkbox"><input type="checkbox" id="block-G" name="block" value="G"> G Block</label>
         </div>
         <button type="button" onclick="generateUnitCalendar()">Generate Unit Calendar</button>
     </form>
 
-    <table id="unit-calendar">
-        <thead>
-            <tr>
-                <th>Class Number</th>
-                <th>Day/Date</th>
-                <th>Topic</th>
-                <th>In-class</th>
-                <th>Homework</th>
-            </tr>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
-    
-    <div class="copy-button-container">
-        <button id="copy-button" style="display: none;" onclick="copyTable()">Copy Table</button>
+    <div style="display: flex; justify-content: center;">
+        <table id="unit-calendar">
+            <thead>
+                <tr>
+                    <th>Class Number</th>
+                    <th>Day/Date</th>
+                    <th>Topic</th>
+                    <th>In-class</th>
+                    <th>Homework</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+
+        <div class="checkbox-container" id="catch-up-container">
+            <!-- Catch up checkboxes will be generated here -->
+        </div>
+    </div>
+
+    <div class="button-container">
+        <button id="regenerate-button" style="display: none;" onclick="applyCatchUpDays()">Regenerate Calendar</button>
+        <button id="copy-button" style="display: none;" onclick="copyTable()">Copy Calendar</button>
+        <button id="restore-button" style="display: none;" onclick="restoreInitialDates()">Restore Initial Dates</button>
     </div>
 
     <script>
         let holidays = [];
+        let dateEntries = [];
+        let initialDateEntries = [];
 
         function toggleEndInput() {
             const endOption = document.getElementById('end-option').value;
@@ -245,7 +263,9 @@
             }
 
             const calendarTable = document.getElementById('unit-calendar').getElementsByTagName('tbody')[0];
+            const catchUpContainer = document.getElementById('catch-up-container');
             calendarTable.innerHTML = ''; // Clear existing calendar data
+            catchUpContainer.innerHTML = ''; // Clear existing catch up checkboxes
 
             const weekDays = ['M', 'T', 'W', 'Th', 'F'];
             const blueWeek = {
@@ -266,7 +286,7 @@
             const scheduleData = { blue: blueWeek, gold: goldWeek };
             let currentWeek = startWeek;
             let currentDate = startDate;
-            let dateEntries = [];
+            dateEntries = [];
 
             // Step 1: Determine the schedule for each block and assign class numbers
             let classNumbers = {}; // Stores class numbers for each block
@@ -319,7 +339,24 @@
                 currentDate.setUTCDate(currentDate.getUTCDate() + 1);
             }
 
-            // Step 2: Merge cells in the "Class Number" column and the corresponding rows in "Topic," "In-Class," and "Homework" columns
+            // Store the initial date entries for restoring
+            initialDateEntries = JSON.parse(JSON.stringify(dateEntries));
+
+            // Step 2: Populate the table and add checkboxes for Catch Up Days
+            populateTableAndCheckboxes();
+
+            // Show the buttons
+            document.getElementById('regenerate-button').style.display = 'inline-block';
+            document.getElementById('copy-button').style.display = 'inline-block';
+            document.getElementById('restore-button').style.display = 'inline-block';
+        }
+
+        function populateTableAndCheckboxes() {
+            const calendarTable = document.getElementById('unit-calendar').getElementsByTagName('tbody')[0];
+            const catchUpContainer = document.getElementById('catch-up-container');
+            calendarTable.innerHTML = ''; // Clear existing calendar data
+            catchUpContainer.innerHTML = ''; // Clear existing catch up checkboxes
+
             let lastClassNumber = null;
             let lastRow = null;
 
@@ -370,10 +407,53 @@
                     cell4.style.display = 'none';
                     cell5.style.display = 'none';
                 }
+
+                // Add the corresponding catch up checkbox
+                const catchUpDiv = document.createElement('div');
+                catchUpDiv.className = 'catch-up-checkbox';
+                const catchUpCheckbox = document.createElement('input');
+                catchUpCheckbox.type = 'checkbox';
+                catchUpCheckbox.dataset.index = index; // Store index to refer back to entry
+                catchUpDiv.appendChild(catchUpCheckbox);
+                const catchUpLabel = document.createElement('label');
+                catchUpLabel.textContent = `Catch Up (${entry.displayDate}, ${entry.block})`;
+                catchUpDiv.appendChild(catchUpLabel);
+                catchUpContainer.appendChild(catchUpDiv);
+            });
+        }
+
+        function applyCatchUpDays() {
+            const catchUpCheckboxes = document.querySelectorAll('.catch-up-checkbox input:checked');
+            catchUpCheckboxes.forEach(checkbox => {
+                const index = parseInt(checkbox.dataset.index);
+                const entry = dateEntries[index];
+
+                // Mark the entry as a catch-up day by setting its class number to null
+                if (entry.type === 'class') {
+                    entry.classNum = null;
+                }
             });
 
-            // Show the copy button
-            document.getElementById('copy-button').style.display = 'block';
+            // Recalculate class numbers
+            let classNumbers = {};
+            dateEntries.forEach(entry => {
+                if (entry.type === 'class' && entry.classNum === null) {
+                    // Skip the catch-up days
+                    return;
+                }
+
+                if (entry.type === 'class') {
+                    if (!classNumbers[entry.block]) {
+                        classNumbers[entry.block] = 1;
+                    } else {
+                        classNumbers[entry.block]++;
+                    }
+                    entry.classNum = classNumbers[entry.block];
+                }
+            });
+
+            // Repopulate the table with updated data
+            populateTableAndCheckboxes();
         }
 
         function copyTable() {
@@ -387,10 +467,15 @@
 
             try {
                 document.execCommand('copy');
-                alert('Table copied to clipboard');
+                alert('Calendar copied to clipboard');
             } catch (err) {
-                alert('Failed to copy table');
+                alert('Failed to copy calendar');
             }
+        }
+
+        function restoreInitialDates() {
+            dateEntries = JSON.parse(JSON.stringify(initialDateEntries));
+            populateTableAndCheckboxes();
         }
     </script>
 </body>
