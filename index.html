@@ -320,17 +320,19 @@
             const scheduleData = { blue: blueWeek, gold: goldWeek };
             let currentWeek = startWeek;
             let currentDate = startDate;
-            let lessonSchedule = {};
-            let classNumber = 1;
             let dateEntries = [];
-            let blocksForCurrentClass = [];
+
+            // Step 1: Determine the schedule for each block and assign class numbers
+            let classNumbers = {}; // Stores class numbers for each block
+            selectedBlocks.forEach(block => {
+                classNumbers[block] = 1; // Initialize class number for each block
+            });
 
             while ((endOption === 'date' && currentDate <= endDate) || 
-                   (endOption === 'class-count' && classNumber <= classCountInput)) {
+                   (endOption === 'class-count' && Object.values(classNumbers).some(num => num <= classCountInput))) {
                 const dayOfWeek = currentDate.getUTCDay();
                 const formattedDate = formatDateToString(currentDate);
 
-                // Add holidays to the dateEntries array
                 if (holidays.includes(formattedDate)) {
                     dateEntries.push({
                         type: 'holiday',
@@ -351,21 +353,17 @@
                 const dateStr = `${weekDays[dayOfWeek - 1]} ${currentDate.getUTCMonth() + 1}/${currentDate.getUTCDate()}`;
 
                 scheduleForDay.forEach(block => {
-                    if (selectedBlocks.includes(block) && !blocksForCurrentClass.includes(block)) {
-                        if (!lessonSchedule[classNumber]) {
-                            lessonSchedule[classNumber] = [];
-                        }
-
-                        lessonSchedule[classNumber].push({ block, displayDate: dateStr, week: currentWeek });
-                        blocksForCurrentClass.push(block);
+                    if (selectedBlocks.includes(block) && classNumbers[block] <= classCountInput) {
+                        dateEntries.push({
+                            type: 'class',
+                            classNum: classNumbers[block],
+                            block: block,
+                            displayDate: dateStr,
+                            week: currentWeek
+                        });
+                        classNumbers[block]++;
                     }
                 });
-
-                if (blocksForCurrentClass.length === selectedBlocks.length) {
-                    // When all blocks have been scheduled for the current class number, move to the next class
-                    blocksForCurrentClass = [];
-                    classNumber++;
-                }
 
                 if (dayOfWeek === 5) { // After Friday, switch weeks
                     currentWeek = currentWeek === 'blue' ? 'gold' : 'blue';
@@ -374,23 +372,7 @@
                 currentDate.setUTCDate(currentDate.getUTCDate() + 1);
             }
 
-            // Add the holidays and class dates to dateEntries
-            Object.keys(lessonSchedule).forEach(classNum => {
-                lessonSchedule[classNum].forEach(entry => {
-                    dateEntries.push({
-                        type: 'class',
-                        classNum,
-                        block: entry.block,
-                        displayDate: entry.displayDate,
-                        week: entry.week
-                    });
-                });
-            });
-
-            // Sort the dateEntries array by date
-            dateEntries.sort((a, b) => parseDateFromString(a.displayDate.split(' ')[1]) - parseDateFromString(b.displayDate.split(' ')[1]));
-
-            // Generate the rows in the table
+            // Step 2: Populate the table after determining the schedule
             dateEntries.forEach(entry => {
                 const row = calendarTable.insertRow();
                 
@@ -425,29 +407,8 @@
                 }
             });
 
-            // Now handle merging rows with the same class number
-            mergeTableRows('unit-calendar', 0);
-
             // Show the copy button
             document.getElementById('copy-button').style.display = 'block';
-        }
-
-        function mergeTableRows(tableID, columnIndex) {
-            const table = document.getElementById(tableID);
-            let rowSpan = 1;
-
-            for (let i = 1; i < table.rows.length; i++) {
-                const currentCell = table.rows[i].cells[columnIndex];
-                const previousCell = table.rows[i - 1].cells[columnIndex];
-
-                if (currentCell.innerHTML === previousCell.innerHTML) {
-                    rowSpan++;
-                    currentCell.remove();
-                    previousCell.rowSpan = rowSpan;
-                } else {
-                    rowSpan = 1;
-                }
-            }
         }
 
         function copyTable() {
