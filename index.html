@@ -97,53 +97,10 @@
             text-align: center;
             margin-top: 20px;
         }
-        #popup {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 400px;
-            background-color: white;
-            border: 1px solid #000;
-            padding: 20px;
-            z-index: 1000;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-        }
-        #popup h3 {
-            text-align: center;
-        }
-        #popup p {
-            font-size: 12px;
-            margin: 10px 0;
-        }
-        #close-popup {
-            display: block;
-            margin: 20px auto 0;
-            padding: 10px;
-            background-color: #2D68C4;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        #popup-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 500;
-        }
     </style>
 </head>
 <body>
     <h1>Unit Planner with Holidays</h1>
-    
-    <div class="popup-button-container" style="text-align: center;">
-        <button onclick="showPopup()">Instructions and Disclaimers</button>
-    </div>
 
     <form id="calendar-form">
         <div>
@@ -209,17 +166,6 @@
     
     <div class="copy-button-container">
         <button id="copy-button" style="display: none;" onclick="copyTable()">Copy Table</button>
-    </div>
-
-    <div id="popup-overlay"></div>
-
-    <div id="popup">
-        <h3>Instructions and Disclaimers</h3>
-        <p>This unit calendar generator is designed for Geffen Academy's schedule. Be aware of the following bugs, which require some care:</p>
-        <p>1. When holidays are entered, sometimes the fields adjacent to the holidays generate extra dates. These can just be deleted. I don't know why this is happening.</p>
-        <p>2. If you are using the "Number of Classes" function, always add more classes than you think you need to make sure the calendar generates all possible meetings for the classes.</p>
-        <p>3. Always double-check against Geffen's master calendar. This is designed to be a time-saving tool, but the program is only as smart as its programmer. Be prepared to shift dates around as necessary.</p>
-        <button id="close-popup" onclick="closePopup()">Close</button>
     </div>
 
     <script>
@@ -334,6 +280,7 @@
                 const formattedDate = formatDateToString(currentDate);
 
                 if (holidays.includes(formattedDate)) {
+                    // If a holiday occurs, insert it and reset the last class number to prevent merging
                     dateEntries.push({
                         type: 'holiday',
                         date: formattedDate,
@@ -372,38 +319,56 @@
                 currentDate.setUTCDate(currentDate.getUTCDate() + 1);
             }
 
-            // Step 2: Populate the table after determining the schedule
-            dateEntries.forEach(entry => {
+            // Step 2: Merge cells in the "Class Number" column and the corresponding rows in "Topic," "In-Class," and "Homework" columns
+            let lastClassNumber = null;
+            let lastRow = null;
+
+            dateEntries.forEach((entry, index) => {
                 const row = calendarTable.insertRow();
                 
+                // Apply color coding for blue and gold weeks
+                if (entry.week === 'blue') {
+                    row.className = 'blue-week';
+                } else if (entry.week === 'gold') {
+                    row.className = 'gold-week';
+                }
+
                 if (entry.type === 'holiday') {
                     row.className = 'holiday-row';
                     const cell1 = row.insertCell(0);
-                    const cell2 = row.insertCell(1);
-                    const cell3 = row.insertCell(2);
-                    const cell4 = row.insertCell(3);
-                    const cell5 = row.insertCell(4);
+                    cell1.colSpan = 5;
+                    cell1.textContent = `${entry.displayDate} (Holiday)`;
+                    lastClassNumber = null; // Prevent merging with subsequent rows
+                    return;
+                }
 
-                    cell1.textContent = '-';
-                    cell2.textContent = `${entry.displayDate} (Holiday)`;
-                    cell3.textContent = 'Holiday';
-                    cell4.textContent = '';
-                    cell5.textContent = '';
+                if (entry.classNum === lastClassNumber) {
+                    lastRow.cells[0].rowSpan = (lastRow.cells[0].rowSpan || 1) + 1;
+                    lastRow.cells[2].rowSpan = (lastRow.cells[2].rowSpan || 1) + 1;
+                    lastRow.cells[3].rowSpan = (lastRow.cells[3].rowSpan || 1) + 1;
+                    lastRow.cells[4].rowSpan = (lastRow.cells[4].rowSpan || 1) + 1;
+                    row.insertCell(0).style.display = 'none'; // Hide the merged cell
                 } else {
-                    const rowClass = entry.week === 'blue' ? 'blue-week' : 'gold-week';
-                    row.className = rowClass;
-
+                    lastClassNumber = entry.classNum;
+                    lastRow = row;
                     const cell1 = row.insertCell(0);
-                    const cell2 = row.insertCell(1);
-                    const cell3 = row.insertCell(2);
-                    const cell4 = row.insertCell(3);
-                    const cell5 = row.insertCell(4);
-
                     cell1.textContent = entry.classNum;
-                    cell2.textContent = `${entry.displayDate} (${entry.block})`;
-                    cell3.textContent = '';
-                    cell4.textContent = '';
-                    cell5.textContent = '';
+                }
+
+                const cell2 = row.insertCell(1);
+                cell2.textContent = `${entry.displayDate} (${entry.block})`;
+                const cell3 = row.insertCell(2);
+                cell3.textContent = ''; // Topic
+                const cell4 = row.insertCell(3);
+                cell4.textContent = ''; // In-Class
+                const cell5 = row.insertCell(4);
+                cell5.textContent = ''; // Homework
+
+                // Merge cells for "Topic", "In-Class", and "Homework"
+                if (index > 0 && entry.classNum === dateEntries[index - 1].classNum && dateEntries[index - 1].type !== 'holiday') {
+                    cell3.style.display = 'none';
+                    cell4.style.display = 'none';
+                    cell5.style.display = 'none';
                 }
             });
 
@@ -426,16 +391,6 @@
             } catch (err) {
                 alert('Failed to copy table');
             }
-        }
-
-        function showPopup() {
-            document.getElementById('popup-overlay').style.display = 'block';
-            document.getElementById('popup').style.display = 'block';
-        }
-
-        function closePopup() {
-            document.getElementById('popup-overlay').style.display = 'none';
-            document.getElementById('popup').style.display = 'none';
         }
     </script>
 </body>
