@@ -81,10 +81,6 @@
         .gold-week {
             background-color: #FBE6C5;
         }
-        .holiday-row {
-            background-color: #D3D3D3;
-            color: black;
-        }
         .checkbox-container {
             display: flex;
             flex-direction: column;
@@ -134,12 +130,6 @@
             <input type="number" id="class-count" name="class-count" min="1">
         </div>
         <div>
-            <label for="holiday-dates">Holiday Dates:</label>
-            <input type="date" id="holiday-dates">
-            <button type="button" onclick="addHoliday()">Add Holiday</button>
-            <ul id="holiday-list"></ul>
-        </div>
-        <div>
             <label for="start-week">Starting Week:</label>
             <select id="start-week" name="start-week" required>
                 <option value="blue">Blue Week</option>
@@ -185,7 +175,6 @@
     </div>
 
     <script>
-        let holidays = [];
         let dateEntries = [];
         let initialDateEntries = [];
 
@@ -204,17 +193,6 @@
                 classCountContainer.style.display = 'block';
                 document.getElementById('end-date').required = false;
                 document.getElementById('class-count').required = true;
-            }
-        }
-
-        function addHoliday() {
-            const holidayInput = document.getElementById('holiday-dates').value;
-            if (holidayInput) {
-                holidays.push(holidayInput);
-                const listItem = document.createElement('li');
-                listItem.textContent = holidayInput;
-                document.getElementById('holiday-list').appendChild(listItem);
-                document.getElementById('holiday-dates').value = '';
             }
         }
 
@@ -288,31 +266,28 @@
             let currentDate = startDate;
             dateEntries = [];
 
-            // Step 1: Determine the schedule for each block and assign class numbers
             let classNumbers = {}; // Stores class numbers for each block
             selectedBlocks.forEach(block => {
                 classNumbers[block] = 1; // Initialize class number for each block
             });
 
+            let lastTeachingWeek = null; // Track the last teaching day to manage proper week alternation
+
             while ((endOption === 'date' && currentDate <= endDate) || 
                    (endOption === 'class-count' && Object.values(classNumbers).some(num => num <= classCountInput))) {
+
                 const dayOfWeek = currentDate.getUTCDay();
                 const formattedDate = formatDateToString(currentDate);
 
-                if (holidays.includes(formattedDate)) {
-                    // If a holiday occurs, insert it and reset the last class number to prevent merging
-                    dateEntries.push({
-                        type: 'holiday',
-                        date: formattedDate,
-                        displayDate: `${weekDays[dayOfWeek - 1]} ${currentDate.getUTCMonth() + 1}/${currentDate.getUTCDate()}`,
-                    });
+                // Skip weekends
+                if (dayOfWeek === 0 || dayOfWeek === 6) {
                     currentDate.setUTCDate(currentDate.getUTCDate() + 1);
                     continue;
                 }
 
-                if (dayOfWeek === 0 || dayOfWeek === 6) { // Skip weekends
-                    currentDate.setUTCDate(currentDate.getUTCDate() + 1);
-                    continue;
+                // Switch weeks every Monday or first teaching day of the week (in case of a catch up day)
+                if (dayOfWeek === 1 || (lastTeachingWeek !== currentWeek && lastTeachingWeek !== null)) {
+                    currentWeek = currentWeek === 'blue' ? 'gold' : 'blue';
                 }
 
                 const weekDayName = Object.keys(scheduleData[currentWeek])[dayOfWeek - 1];
@@ -332,17 +307,17 @@
                     }
                 });
 
-                if (dayOfWeek === 5) { // After Friday, switch weeks
-                    currentWeek = currentWeek === 'blue' ? 'gold' : 'blue';
-                }
-
+                lastTeachingWeek = currentWeek; // Update the last teaching week
                 currentDate.setUTCDate(currentDate.getUTCDate() + 1);
             }
+
+            // ** Sort dates properly by date to avoid ordering issues **
+            dateEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
 
             // Store the initial date entries for restoring
             initialDateEntries = JSON.parse(JSON.stringify(dateEntries));
 
-            // Step 2: Populate the table and add checkboxes for Catch Up Days
+            // Populate the table and add checkboxes for Catch Up Days
             populateTableAndCheckboxes();
 
             // Show the buttons
@@ -363,20 +338,10 @@
             dateEntries.forEach((entry, index) => {
                 const row = calendarTable.insertRow();
                 
-                // Apply color coding for blue and gold weeks
                 if (entry.week === 'blue') {
                     row.className = 'blue-week';
                 } else if (entry.week === 'gold') {
                     row.className = 'gold-week';
-                }
-
-                if (entry.type === 'holiday') {
-                    row.className = 'holiday-row';
-                    const cell1 = row.insertCell(0);
-                    cell1.colSpan = 5;
-                    cell1.textContent = `${entry.displayDate} (Holiday)`;
-                    lastClassNumber = null; // Prevent merging with subsequent rows
-                    return;
                 }
 
                 if (entry.classNum === lastClassNumber) {
@@ -401,19 +366,17 @@
                 const cell5 = row.insertCell(4);
                 cell5.textContent = ''; // Homework
 
-                // Merge cells for "Topic", "In-Class", and "Homework"
-                if (index > 0 && entry.classNum === dateEntries[index - 1].classNum && dateEntries[index - 1].type !== 'holiday') {
+                if (index > 0 && entry.classNum === dateEntries[index - 1].classNum) {
                     cell3.style.display = 'none';
                     cell4.style.display = 'none';
                     cell5.style.display = 'none';
                 }
 
-                // Add the corresponding catch up checkbox
                 const catchUpDiv = document.createElement('div');
                 catchUpDiv.className = 'catch-up-checkbox';
                 const catchUpCheckbox = document.createElement('input');
                 catchUpCheckbox.type = 'checkbox';
-                catchUpCheckbox.dataset.index = index; // Store index to refer back to entry
+                catchUpCheckbox.dataset.index = index;
                 catchUpDiv.appendChild(catchUpCheckbox);
                 const catchUpLabel = document.createElement('label');
                 catchUpLabel.textContent = `Catch Up (${entry.displayDate}, ${entry.block})`;
@@ -428,17 +391,14 @@
                 const index = parseInt(checkbox.dataset.index);
                 const entry = dateEntries[index];
 
-                // Mark the entry as a catch-up day by setting its class number to null
                 if (entry.type === 'class') {
                     entry.classNum = null;
                 }
             });
 
-            // Recalculate class numbers
             let classNumbers = {};
             dateEntries.forEach(entry => {
                 if (entry.type === 'class' && entry.classNum === null) {
-                    // Skip the catch-up days
                     return;
                 }
 
@@ -452,7 +412,6 @@
                 }
             });
 
-            // Repopulate the table with updated data
             populateTableAndCheckboxes();
         }
 
