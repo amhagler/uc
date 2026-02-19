@@ -1,441 +1,1484 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unit Planner with Catch Up Days</title>
-    <style>
-        body {
-            font-family: Garamond, serif;
-            background-color: #ececec;
-            color: #2D68C4;
-            padding: 20px;
-            margin: 0;
-            line-height: 1;
-            font-size: 11px;
-        }
-        h1, h2 {
-            color: #2D68C4;
-            text-align: center;
-        }
-        form {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .block-selection {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            width: 100%;
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            text-align: center;
-        }
-        input, select, button {
-            padding: 12px;
-            font-size: 16px;
-            margin-bottom: 10px;
-            border: none;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-        button {
-            background-color: #2D68C4;
-            color: white;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #1E4F8E;
-        }
-        input[type="checkbox"] {
-            width: 24px;
-            height: 24px;
-        }
-        table {
-            width: 100%;
-            max-width: 650px;
-            margin: 0 auto;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #000;
-            padding: 8px;
-            text-align: center;
-            font-size: 11px;
-        }
-        th {
-            background-color: #2D68C4;
-            color: white;
-        }
-        .blue-week {
-            background-color: #B3CDE0;
-        }
-        .gold-week {
-            background-color: #FBE6C5;
-        }
-        .checkbox-container {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            margin-left: 10px;
-            margin-right: 10px;
-        }
-        .catch-up-checkbox {
-            display: flex;
-            align-items: center;
-            height: 35px;
-            margin-bottom: 5px;
-        }
-        .catch-up-checkbox input {
-            margin-right: 10px;
-        }
-        .button-container {
-            text-align: center;
-            margin-top: 20px;
-        }
-        .button-container button {
-            margin-right: 10px;
-        }
-    </style>
-</head>
-<body>
-    <h1>Unit Planner with Catch Up Days</h1>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Unit Calendar Generator (Blue/Gold Waterfall)</title>
+  <style>
+    :root{
+      --bg:#f4f6fb;
+      --panel:#ffffff;
+      --panel2:#fbfcff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --line:#e5e7eb;
+      --brand:#2D68C4;
+      --brand2:#1E4F8E;
 
-    <form id="calendar-form">
-        <div>
-            <label for="start-date">Start Date:</label>
-            <input type="date" id="start-date" name="start-date" required>
-        </div>
-        <div>
-            <label for="end-class-count">End by:</label>
-            <select id="end-option" name="end-option" onchange="toggleEndInput()">
-                <option value="date">End Date</option>
-                <option value="class-count">Number of Classes</option>
-            </select>
-        </div>
-        <div id="end-date-container">
-            <label for="end-date">End Date:</label>
-            <input type="date" id="end-date" name="end-date">
-        </div>
-        <div id="class-count-container" style="display: none;">
-            <label for="class-count">Number of Classes:</label>
-            <input type="number" id="class-count" name="class-count" min="1">
-        </div>
-        <div>
-            <label for="start-week">Starting Week:</label>
-            <select id="start-week" name="start-week" required>
+      --radius:16px;
+      --shadow2:0 8px 18px rgba(17,24,39,.08);
+
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --serif: Garamond, Georgia, "Times New Roman", serif;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      padding:18px;
+      background: radial-gradient(900px 420px at 20% 0%, rgba(45,104,196,.12), transparent 60%),
+                  radial-gradient(900px 420px at 85% 18%, rgba(30,79,142,.10), transparent 60%),
+                  var(--bg);
+      color:var(--ink);
+      font-family:var(--sans);
+      line-height:1.35;
+    }
+
+    header{
+      max-width: 1180px;
+      margin: 0 auto 14px auto;
+      padding: 10px 10px 2px 10px;
+      text-align:center;
+    }
+    header h1{
+      margin:0;
+      font-family:var(--serif);
+      font-weight:700;
+      letter-spacing:.2px;
+      color:var(--brand);
+      font-size: 24px;
+      line-height:1.1;
+    }
+    header p{
+      margin:8px 0 0 0;
+      color:var(--muted);
+      font-size: 13px;
+    }
+
+    .app{
+      max-width: 1180px;
+      margin: 0 auto;
+      display:grid;
+      grid-template-columns: 380px 1fr;
+      gap: 14px;
+      align-items:start;
+    }
+
+    @media (max-width: 980px){
+      .app{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow2);
+      overflow:hidden;
+    }
+
+    .card .card-hd{
+      padding: 14px 14px 10px 14px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(to bottom, #ffffff, var(--panel2));
+    }
+    .card .card-hd h2{
+      margin:0;
+      font-size: 14px;
+      letter-spacing:.06em;
+      text-transform: uppercase;
+      color: var(--brand);
+      font-weight: 800;
+    }
+    .card .card-hd .sub{
+      margin-top:6px;
+      color:var(--muted);
+      font-size: 12px;
+    }
+
+    .card .card-bd{ padding: 14px; }
+    .grid{ display:grid; gap: 12px; }
+
+    label{
+      display:block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom:6px;
+      font-weight: 700;
+      letter-spacing:.02em;
+    }
+
+    input[type="date"], input[type="number"], select, textarea, button{
+      font-family: var(--sans);
+      font-size: 14px;
+    }
+
+    input[type="date"], input[type="number"], select, textarea{
+      width:100%;
+      padding: 10px 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      outline: none;
+      background:#fff;
+      color: var(--ink);
+      transition: box-shadow .15s ease, border-color .15s ease;
+    }
+    input[type="date"]:focus, input[type="number"]:focus, select:focus, textarea:focus{
+      border-color: rgba(45,104,196,.55);
+      box-shadow: 0 0 0 4px rgba(45,104,196,.12);
+    }
+
+    textarea{
+      min-height: 92px;
+      resize: vertical;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .row2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 980px){
+      .row2{ grid-template-columns: 1fr; }
+    }
+
+    .seg{
+      display:flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .seg button{
+      border:1px solid var(--line);
+      background:#fff;
+      color: var(--ink);
+      padding: 9px 10px;
+      border-radius: 999px;
+      cursor:pointer;
+      transition: transform .06s ease, background .15s ease, border-color .15s ease, color .15s ease;
+      font-weight: 800;
+      font-size: 12px;
+      letter-spacing:.02em;
+      user-select:none;
+    }
+    .seg button:active{ transform: translateY(1px); }
+    .seg button.active{
+      border-color: rgba(45,104,196,.55);
+      background: rgba(45,104,196,.10);
+      color: var(--brand2);
+    }
+
+    .blocks{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    @media (max-width: 980px){
+      .blocks{ grid-template-columns: repeat(7, 1fr); }
+    }
+
+    .blk{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 8px;
+      padding: 9px 8px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background:#fff;
+      cursor:pointer;
+      user-select:none;
+      transition: border-color .15s ease, box-shadow .15s ease, transform .06s ease, background .15s ease;
+      font-weight: 900;
+      color: #0f172a;
+    }
+    .blk input{ display:none; }
+    .blk.checked{
+      border-color: rgba(45,104,196,.55);
+      box-shadow: 0 0 0 4px rgba(45,104,196,.12);
+      background: rgba(45,104,196,.08);
+      color: var(--brand2);
+    }
+
+    .btnrow{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button.primary{
+      background: var(--brand);
+      color: #fff;
+      border: none;
+      padding: 11px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      font-weight: 900;
+      box-shadow: var(--shadow2);
+      transition: background .15s ease, transform .06s ease;
+    }
+    button.primary:hover{ background: var(--brand2); }
+    button.primary:active{ transform: translateY(1px); }
+
+    button.ghost{
+      background:#fff;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      padding: 11px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      font-weight: 900;
+      transition: background .15s ease, border-color .15s ease, transform .06s ease;
+    }
+    button.ghost:hover{ background: #f8fafc; }
+    button.ghost:active{ transform: translateY(1px); }
+
+    button.danger{
+      background:#fff;
+      color:#991b1b;
+      border: 1px solid rgba(153,27,27,.22);
+      padding: 11px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      font-weight: 900;
+      transition: background .15s ease, border-color .15s ease, transform .06s ease;
+    }
+    button.danger:hover{ background: rgba(153,27,27,.06); }
+    button.danger:active{ transform: translateY(1px); }
+
+    .hint{
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .pillrow{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+      font-weight: 800;
+      font-size: 12px;
+      color: #0f172a;
+    }
+    .chip code{
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .chip button{
+      border:none;
+      background: transparent;
+      cursor:pointer;
+      font-size: 16px;
+      line-height: 1;
+      padding: 0 2px;
+      color: var(--muted);
+    }
+    .chip button:hover{ color: #111827; }
+
+    /* RIGHT SIDE: TABLE */
+    .tableWrap{ padding: 12px 12px 14px 12px; }
+    .tableTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .tableTop .meta{
+      font-size: 12px;
+      color: var(--muted);
+      line-height:1.25;
+    }
+    .tableTop .meta b{ color: #111827; }
+
+    table{
+      width:100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      overflow:hidden;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background:#fff;
+    }
+    thead th{
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: linear-gradient(to bottom, rgba(45,104,196,.92), rgba(30,79,142,.92));
+      color:#fff;
+      text-align:left;
+      font-size: 12px;
+      letter-spacing:.06em;
+      text-transform: uppercase;
+      padding: 10px 10px;
+      border-bottom: 1px solid rgba(255,255,255,.22);
+      white-space: nowrap;
+    }
+    tbody td{
+      font-size: 13px;
+      padding: 10px 10px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    tbody tr:last-child td{ border-bottom:none; }
+
+    .wk-blue td{ background: rgba(179,205,224,.45); }
+    .wk-gold td{ background: rgba(251,230,197,.50); }
+
+    .col-lesson{ width: 88px; font-weight: 900; }
+    .col-when{ width: 180px; white-space: nowrap; font-family: var(--mono); font-size: 12px; }
+    .col-title{ width: 200px; }
+    .col-in{ width: 260px; }
+    .col-hw{ width: 220px; }
+
+    .whenLine{
+      font-family: var(--mono);
+      font-size: 12px;
+      margin: 0 0 4px 0;
+      color: #0f172a;
+    }
+    .whenLine .mut{ color: var(--muted); font-weight: 700; }
+
+    .emptyCell{ color: #9ca3af; font-style: italic; }
+
+    .notice{
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      padding: 10px 10px;
+      border: 1px dashed rgba(45,104,196,.32);
+      border-radius: 14px;
+      background: rgba(45,104,196,.04);
+    }
+
+    .smallControls{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .divider{
+      height: 1px;
+      background: var(--line);
+      margin: 10px 0;
+    }
+
+    .rightFoot{
+      margin-top: 10px;
+      display:flex;
+      justify-content:space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items:center;
+    }
+
+    .mutedBadge{
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--muted);
+      background: rgba(17,24,39,.04);
+      border: 1px solid var(--line);
+      padding: 6px 10px;
+      border-radius: 999px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Unit Calendar Generator</h1>
+    <p>Blue/Gold waterfall schedule (A–G). Generate a merged “Lesson #” sequence across selected blocks, with robust blackout date entry.</p>
+  </header>
+
+  <div class="app">
+    <!-- LEFT: CONTROLS -->
+    <div class="card">
+      <div class="card-hd">
+        <h2>Setup</h2>
+        <div class="sub">Choose start/end rules, starting week, blocks, and blackout dates (holidays, breaks, conferences).</div>
+      </div>
+
+      <div class="card-bd">
+        <div class="grid">
+          <div class="row2">
+            <div>
+              <label for="start-date">Start date</label>
+              <input type="date" id="start-date" required />
+            </div>
+
+            <div>
+              <label for="start-week">Starting week</label>
+              <select id="start-week" required>
                 <option value="blue">Blue Week</option>
                 <option value="gold">Gold Week</option>
-            </select>
-        </div>
-        <div class="block-selection">
-            <label class="block-checkbox"><input type="checkbox" id="block-A" name="block" value="A"> A Block</label>
-            <label class="block-checkbox"><input type="checkbox" id="block-B" name="block" value="B"> B Block</label>
-            <label class="block-checkbox"><input type="checkbox" id="block-C" name="block" value="C"> C Block</label>
-            <label class="block-checkbox"><input type="checkbox" id="block-D" name="block" value="D"> D Block</label>
-            <label class="block-checkbox"><input type="checkbox" id="block-E" name="block" value="E"> E Block</label>
-            <label class="block-checkbox"><input type="checkbox" id="block-F" name="block" value="F"> F Block</label>
-            <label class="block-checkbox"><input type="checkbox" id="block-G" name="block" value="G"> G Block</label>
-        </div>
-        <button type="button" onclick="generateUnitCalendar()">Generate Unit Calendar</button>
-    </form>
+              </select>
+              <div class="hint">First teaching day uses this week. Weeks then alternate on Mondays.</div>
+            </div>
+          </div>
 
-    <div style="display: flex; justify-content: center;">
-        <table id="unit-calendar">
-            <thead>
-                <tr>
-                    <th>Class Number</th>
-                    <th>Day/Date</th>
-                    <th>Topic</th>
-                    <th>In-class</th>
-                    <th>Homework</th>
-                </tr>
-            </thead>
-            <tbody>
-            </tbody>
+          <div>
+            <label>End rule</label>
+            <div class="seg" id="endSeg">
+              <button type="button" class="active" data-mode="date">End by Date</button>
+              <button type="button" data-mode="per-block">End by Classes per Block</button>
+              <button type="button" data-mode="lessons">End by Lessons (Merged)</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div id="end-date-box">
+              <label for="end-date">End date</label>
+              <input type="date" id="end-date" />
+              <div class="hint">Generates all matching class meetings through this date (skipping blackout dates and weekends).</div>
+            </div>
+
+            <div id="end-per-block-box" style="display:none;">
+              <label for="class-count">Classes per selected block</label>
+              <input type="number" id="class-count" min="1" placeholder="e.g., 12" />
+              <div class="hint">Stops when each selected block reaches this many meetings.</div>
+            </div>
+
+            <div id="end-lessons-box" style="display:none;">
+              <label for="lesson-count">Lessons (merged sequence)</label>
+              <input type="number" id="lesson-count" min="1" placeholder="e.g., 12" />
+              <div class="hint">Stops when merged Lesson # reaches this value.</div>
+            </div>
+          </div>
+
+          <div>
+            <label>Blocks (A–G)</label>
+            <div class="blocks" id="blocks"></div>
+            <div class="hint">Lesson numbering merges the 1st meeting of each selected block into Lesson 1, etc.</div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="grid">
+            <div>
+              <label>No School / Blackout dates</label>
+
+              <!-- Single date add -->
+              <div class="row2">
+                <div>
+                  <input type="date" id="blackout-add" />
+                </div>
+                <div class="btnrow">
+                  <button type="button" class="ghost" id="blackout-add-btn">Add date</button>
+                  <button type="button" class="danger" id="blackout-clear-btn">Clear</button>
+                </div>
+              </div>
+
+              <!-- Range add -->
+              <div style="margin-top:10px;">
+                <label style="margin-bottom:6px;">Add range (weekdays only)</label>
+                <div class="row2">
+                  <div>
+                    <input type="date" id="blackout-range-start" />
+                    <div class="hint" style="margin-top:6px;">Range start</div>
+                  </div>
+                  <div>
+                    <input type="date" id="blackout-range-end" />
+                    <div class="hint" style="margin-top:6px;">Range end</div>
+                  </div>
+                </div>
+                <div class="btnrow" style="margin-top:10px;">
+                  <button type="button" class="ghost" id="blackout-range-btn">Add range</button>
+                </div>
+                <div class="hint">Useful for Spring Break, Thanksgiving week, conference weeks, etc.</div>
+              </div>
+
+              <div class="hint" style="margin-top:10px;">Blackout dates are skipped entirely during generation.</div>
+
+              <div class="pillrow" id="blackout-chips"></div>
+
+              <div style="margin-top:10px;">
+                <label for="blackout-paste">Paste dates (comma or newline separated)</label>
+                <textarea id="blackout-paste" placeholder="2026-09-07, 9/16/2026&#10;10/12/2026"></textarea>
+                <div class="btnrow" style="margin-top:8px;">
+                  <button type="button" class="ghost" id="blackout-import-btn">Import pasted dates</button>
+                  <label class="ghost" style="display:inline-flex;align-items:center;gap:10px;cursor:pointer;">
+                    <input type="file" id="ics-file" accept=".ics" style="display:none;" />
+                    Import .ics
+                  </label>
+                </div>
+                <div class="hint">Accepted formats: YYYY-MM-DD, M/D/YYYY, MM/DD/YYYY. Separate by commas and/or new lines.</div>
+              </div>
+            </div>
+
+            <div class="btnrow">
+              <button type="button" class="primary" id="generate-btn">Generate calendar</button>
+              <button type="button" class="ghost" id="restore-btn" style="display:none;">Restore initial</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: OUTPUT -->
+    <div class="card">
+      <div class="card-hd">
+        <h2>Calendar</h2>
+        <div class="sub">Copy to Docs/Sheets, or export. “Lesson #” is the merged sequence across selected blocks.</div>
+      </div>
+
+      <div class="tableWrap">
+        <div class="tableTop">
+          <div class="meta" id="meta">
+            <div><b>Status:</b> Not generated yet.</div>
+            <div>Tip: add blackout dates first so you don’t have to “catch up” manually later.</div>
+          </div>
+
+          <div class="smallControls">
+            <button type="button" class="ghost" id="copy-html-btn" style="display:none;">Copy (HTML table)</button>
+            <button type="button" class="ghost" id="copy-tsv-btn" style="display:none;">Copy (TSV for Sheets)</button>
+            <button type="button" class="ghost" id="dl-csv-btn" style="display:none;">Download CSV</button>
+          </div>
+        </div>
+
+        <table id="unit-calendar" aria-label="Unit calendar">
+          <thead>
+            <tr>
+              <th class="col-lesson">Lesson #</th>
+              <th class="col-when">Day/Date (Block)</th>
+              <th class="col-title">Lesson Title</th>
+              <th class="col-in">In-class</th>
+              <th class="col-hw">Homework</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
         </table>
 
-        <div class="checkbox-container" id="catch-up-container">
-            <!-- Catch up checkboxes will be generated here -->
+        <div class="rightFoot">
+          <div class="mutedBadge" id="counts" style="display:none;"></div>
+          <div class="btnrow" id="catchupRow" style="display:none;">
+            <button type="button" class="ghost" id="open-offdays-btn">Mark off-days from generated list</button>
+            <button type="button" class="ghost" id="apply-offdays-btn" style="display:none;">Apply selected off-days</button>
+          </div>
         </div>
+
+        <div class="notice" id="offdaysBox" style="display:none;">
+          <div style="font-weight:900;color:#0f172a;margin-bottom:6px;">Mark off-days (adds to blackout dates)</div>
+          <div style="margin-bottom:8px;color:var(--muted);">
+            Check dates that should be skipped. Then click “Apply selected off-days.”
+          </div>
+          <div id="offdaysList" style="display:grid;gap:6px;"></div>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <div class="button-container">
-        <button id="regenerate-button" style="display: none;" onclick="applyCatchUpDays()">Regenerate Calendar</button>
-        <button id="copy-button" style="display: none;" onclick="copyTable()">Copy Calendar</button>
-        <button id="restore-button" style="display: none;" onclick="restoreInitialDates()">Restore Initial Dates</button>
-    </div>
+  <script>
+    /***********************
+     * Schedule definition *
+     ***********************/
+    const weekDaysShort = ['M', 'T', 'W', 'Th', 'F'];
 
-    <script>
-        let dateEntries = [];
-        let initialDateEntries = [];
+    const blueWeek = {
+      monday:    ["A", "B", "C", "D", "E"],
+      tuesday:   ["F", "G", "A", "B", "C"],
+      wednesday: ["D", "E", "F", "G", "A"],
+      thursday:  ["B", "C", "D", "E", "F"],
+      friday:    ["G", "A", "B", "C", "D"]
+    };
 
-        function toggleEndInput() {
-            const endOption = document.getElementById('end-option').value;
-            const endDateContainer = document.getElementById('end-date-container');
-            const classCountContainer = document.getElementById('class-count-container');
+    // Gold Friday intentionally has four blocks so Blue Monday restarts cleanly on A.
+    const goldWeek = {
+      monday:    ["E", "F", "G", "A", "B"],
+      tuesday:   ["C", "D", "E", "F", "G"],
+      wednesday: ["A", "B", "C", "D", "E"],
+      thursday:  ["F", "G", "A", "B", "C"],
+      friday:    ["D", "E", "F", "G"]
+    };
 
-            if (endOption === 'date') {
-                endDateContainer.style.display = 'block';
-                classCountContainer.style.display = 'none';
-                document.getElementById('end-date').required = true;
-                document.getElementById('class-count').required = false;
-            } else {
-                endDateContainer.style.display = 'none';
-                classCountContainer.style.display = 'block';
-                document.getElementById('end-date').required = false;
-                document.getElementById('class-count').required = true;
-            }
+    const scheduleData = { blue: blueWeek, gold: goldWeek };
+    const weekDayKeys = ["monday", "tuesday", "wednesday", "thursday", "friday"];
+
+    /***********************
+     * State              *
+     ***********************/
+    let blackoutDates = new Set();          // ISO YYYY-MM-DD
+    let generatedEntries = [];              // flat meeting entries
+    let initialGeneratedEntries = null;     // deep copy for restore
+    let currentConfigSnapshot = null;       // for off-days UI
+    let endMode = "date";                   // "date" | "per-block" | "lessons"
+
+    /***********************
+     * Helpers            *
+     ***********************/
+    function pad2(n){ return String(n).padStart(2,'0'); }
+
+    // Work in UTC to avoid timezone weirdness across DST.
+    function toISODateUTC(date){
+      return `${date.getUTCFullYear()}-${pad2(date.getUTCMonth()+1)}-${pad2(date.getUTCDate())}`;
+    }
+    function fromISODateUTC(iso){
+      const [y,m,d] = iso.split("-").map(Number);
+      return new Date(Date.UTC(y, m-1, d));
+    }
+    function nextDayUTC(date){
+      const d = new Date(date.getTime());
+      d.setUTCDate(d.getUTCDate() + 1);
+      return d;
+    }
+    function monthDayUTC(date){
+      return `${date.getUTCMonth()+1}/${date.getUTCDate()}`;
+    }
+    function dayShortUTC(date){
+      const dow = date.getUTCDay();
+      if (dow < 1 || dow > 5) return "";
+      return weekDaysShort[dow - 1];
+    }
+    function isWeekdayUTC(date){
+      const dow = date.getUTCDay();
+      return dow >= 1 && dow <= 5;
+    }
+    function clampInt(n){
+      if (!Number.isFinite(n)) return null;
+      const v = Math.floor(n);
+      return v >= 1 ? v : null;
+    }
+
+    function deepCopy(obj){
+      return JSON.parse(JSON.stringify(obj));
+    }
+
+    function uniqSortedISO(set){
+      return Array.from(set).sort((a,b) => a.localeCompare(b));
+    }
+
+    function show(el){ el.style.display = ""; }
+    function hide(el){ el.style.display = "none"; }
+
+    function toast(msg){
+      alert(msg);
+    }
+
+    /******************************
+     * Multi-format date parsing  *
+     ******************************/
+    function parseFlexibleDateToken(token){
+      // Accept:
+      // - YYYY-MM-DD
+      // - M/D/YYYY or MM/DD/YYYY
+      // Returns ISO YYYY-MM-DD or null
+      const t = token.trim();
+      if (!t) return null;
+
+      // ISO
+      if (/^\d{4}-\d{2}-\d{2}$/.test(t)){
+        const d = fromISODateUTC(t);
+        if (!isNaN(d.getTime())) return t;
+        return null;
+      }
+
+      // M/D/YYYY
+      const m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (m){
+        const mm = Number(m[1]);
+        const dd = Number(m[2]);
+        const yy = Number(m[3]);
+        if (mm < 1 || mm > 12 || dd < 1 || dd > 31) return null;
+        const iso = `${yy}-${pad2(mm)}-${pad2(dd)}`;
+        const d = fromISODateUTC(iso);
+        // Validate round-trip (catch 2/30, etc.)
+        if (d.getUTCFullYear() !== yy || (d.getUTCMonth()+1) !== mm || d.getUTCDate() !== dd) return null;
+        return iso;
+      }
+
+      return null;
+    }
+
+    function tokenizeDateList(text){
+      // Split by commas and/or newlines
+      return text
+        .split(/[\n,]+/g)
+        .map(s => s.trim())
+        .filter(Boolean);
+    }
+
+    /***********************
+     * UI Build: Blocks    *
+     ***********************/
+    const blocksWrap = document.getElementById("blocks");
+    const blockLetters = ["A","B","C","D","E","F","G"];
+
+    function buildBlocks(){
+      blocksWrap.innerHTML = "";
+      blockLetters.forEach(letter => {
+        const lab = document.createElement("label");
+        lab.className = "blk";
+        lab.setAttribute("data-block", letter);
+        lab.innerHTML = `
+          <input type="checkbox" name="block" value="${letter}" />
+          <span>${letter}</span>
+        `;
+        lab.addEventListener("click", (e) => {
+          const cb = lab.querySelector("input");
+          cb.checked = !cb.checked;
+          lab.classList.toggle("checked", cb.checked);
+          e.preventDefault();
+        });
+        blocksWrap.appendChild(lab);
+      });
+    }
+    buildBlocks();
+
+    function getSelectedBlocks(){
+      const cbs = blocksWrap.querySelectorAll('input[name="block"]:checked');
+      return Array.from(cbs).map(cb => cb.value);
+    }
+
+    /***********************
+     * End mode toggles    *
+     ***********************/
+    const endSeg = document.getElementById("endSeg");
+    const endDateBox = document.getElementById("end-date-box");
+    const endPerBlockBox = document.getElementById("end-per-block-box");
+    const endLessonsBox = document.getElementById("end-lessons-box");
+
+    endSeg.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-mode]");
+      if (!btn) return;
+      endMode = btn.dataset.mode;
+      Array.from(endSeg.querySelectorAll("button")).forEach(b => b.classList.toggle("active", b === btn));
+
+      if (endMode === "date"){
+        show(endDateBox); hide(endPerBlockBox); hide(endLessonsBox);
+      } else if (endMode === "per-block"){
+        hide(endDateBox); show(endPerBlockBox); hide(endLessonsBox);
+      } else {
+        hide(endDateBox); hide(endPerBlockBox); show(endLessonsBox);
+      }
+    });
+
+    /***********************
+     * Blackout dates UI   *
+     ***********************/
+    const blackoutAdd = document.getElementById("blackout-add");
+    const blackoutAddBtn = document.getElementById("blackout-add-btn");
+    const blackoutClearBtn = document.getElementById("blackout-clear-btn");
+    const blackoutChips = document.getElementById("blackout-chips");
+
+    const blackoutRangeStart = document.getElementById("blackout-range-start");
+    const blackoutRangeEnd = document.getElementById("blackout-range-end");
+    const blackoutRangeBtn = document.getElementById("blackout-range-btn");
+
+    const blackoutPaste = document.getElementById("blackout-paste");
+    const blackoutImportBtn = document.getElementById("blackout-import-btn");
+    const icsFile = document.getElementById("ics-file");
+
+    function renderBlackoutChips(){
+      blackoutChips.innerHTML = "";
+      const arr = uniqSortedISO(blackoutDates);
+      if (!arr.length) return;
+
+      arr.forEach(iso => {
+        const chip = document.createElement("span");
+        chip.className = "chip";
+        chip.innerHTML = `<span>No school</span> <code>${iso}</code>`;
+        const x = document.createElement("button");
+        x.type = "button";
+        x.title = "Remove";
+        x.textContent = "×";
+        x.addEventListener("click", () => {
+          blackoutDates.delete(iso);
+          renderBlackoutChips();
+        });
+        chip.appendChild(x);
+        blackoutChips.appendChild(chip);
+      });
+    }
+
+    function addBlackoutISO(iso){
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+      const d = fromISODateUTC(iso);
+      if (isNaN(d.getTime())) return false;
+      blackoutDates.add(iso);
+      return true;
+    }
+
+    function addBlackoutRange(startISO, endISO){
+      if (!startISO || !endISO) return { added: 0, error: "Please enter both range start and range end." };
+      if (endISO < startISO) return { added: 0, error: "Range end must be on or after range start." };
+
+      let added = 0;
+      let d = fromISODateUTC(startISO);
+      const end = fromISODateUTC(endISO);
+
+      while (toISODateUTC(d) <= toISODateUTC(end)){
+        if (isWeekdayUTC(d)){
+          const iso = toISODateUTC(d);
+          if (!blackoutDates.has(iso)){
+            blackoutDates.add(iso);
+            added++;
+          }
+        }
+        d = nextDayUTC(d);
+      }
+
+      return { added, error: null };
+    }
+
+    blackoutAddBtn.addEventListener("click", () => {
+      const iso = blackoutAdd.value;
+      if (!iso){ toast("Pick a date to add."); return; }
+      addBlackoutISO(iso);
+      blackoutAdd.value = "";
+      renderBlackoutChips();
+    });
+
+    blackoutRangeBtn.addEventListener("click", () => {
+      const s = blackoutRangeStart.value;
+      const e = blackoutRangeEnd.value;
+      const res = addBlackoutRange(s, e);
+      if (res.error){ toast(res.error); return; }
+      renderBlackoutChips();
+      toast(`Added ${res.added} weekday blackout date(s) from range.`);
+      blackoutRangeStart.value = "";
+      blackoutRangeEnd.value = "";
+    });
+
+    blackoutClearBtn.addEventListener("click", () => {
+      blackoutDates = new Set();
+      renderBlackoutChips();
+    });
+
+    blackoutImportBtn.addEventListener("click", () => {
+      const tokens = tokenizeDateList(blackoutPaste.value);
+      if (!tokens.length){
+        toast("Paste some dates first.");
+        return;
+      }
+
+      let ok = 0, bad = 0;
+      tokens.forEach(tok => {
+        const iso = parseFlexibleDateToken(tok);
+        if (!iso){ bad++; return; }
+        if (!blackoutDates.has(iso)){
+          blackoutDates.add(iso);
+          ok++;
+        }
+      });
+
+      renderBlackoutChips();
+      toast(`Imported ${ok} date(s)` + (bad ? `; skipped ${bad} invalid.` : "."));
+    });
+
+    // Minimal .ics import: collect DTSTART lines (all-day dates typically appear as DTSTART;VALUE=DATE:YYYYMMDD)
+    icsFile.addEventListener("change", async () => {
+      const file = icsFile.files && icsFile.files[0];
+      if (!file) return;
+
+      const text = await file.text();
+      const lines = text.split(/\r?\n/);
+
+      let found = 0;
+      for (const line of lines){
+        const m = line.match(/^DTSTART(?:;[^:]*)?:(\d{8})/i);
+        if (!m) continue;
+        const y = m[1].slice(0,4);
+        const mo = m[1].slice(4,6);
+        const d = m[1].slice(6,8);
+        const iso = `${y}-${mo}-${d}`;
+        // Add only if it's a weekday (since tool is weekday-skipping anyway and you requested weekday-only for ranges)
+        const dd = fromISODateUTC(iso);
+        if (isWeekdayUTC(dd) && addBlackoutISO(iso)) found++;
+      }
+      renderBlackoutChips();
+      toast(found ? `Imported ${found} blackout weekday date(s) from .ics.` : "No valid weekday DTSTART dates found in that .ics.");
+      icsFile.value = "";
+    });
+
+    renderBlackoutChips();
+
+    /***********************
+     * Core generation     *
+     ***********************/
+    const generateBtn = document.getElementById("generate-btn");
+    const restoreBtn = document.getElementById("restore-btn");
+
+    const meta = document.getElementById("meta");
+    const counts = document.getElementById("counts");
+    const copyHtmlBtn = document.getElementById("copy-html-btn");
+    const copyTsvBtn = document.getElementById("copy-tsv-btn");
+    const dlCsvBtn = document.getElementById("dl-csv-btn");
+
+    const offdaysBox = document.getElementById("offdaysBox");
+    const offdaysList = document.getElementById("offdaysList");
+    const openOffdaysBtn = document.getElementById("open-offdays-btn");
+    const applyOffdaysBtn = document.getElementById("apply-offdays-btn");
+    const catchupRow = document.getElementById("catchupRow");
+
+    function computeWeekForDate(startWeek, startDateISO, dateISO){
+      // First teaching day uses startWeek (no pre-flip),
+      // then flip on each Monday teaching day AFTER generation has started.
+      const startDate = fromISODateUTC(startDateISO);
+      let currentWeek = startWeek;
+      let d = new Date(startDate.getTime());
+      let started = false;
+
+      while (toISODateUTC(d) <= dateISO){
+        const iso = toISODateUTC(d);
+        const dow = d.getUTCDay();
+
+        const isTeachDay = (dow >= 1 && dow <= 5) && !blackoutDates.has(iso);
+
+        if (isTeachDay){
+          if (!started){
+            started = true;
+          } else if (dow === 1){
+            currentWeek = (currentWeek === "blue") ? "gold" : "blue";
+          }
         }
 
-        function formatDateToString(date) {
-            const year = date.getUTCFullYear();
-            const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-            const day = String(date.getUTCDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
+        if (iso === dateISO) break;
+        d = nextDayUTC(d);
+      }
+
+      return currentWeek;
+    }
+
+    function getScheduleBlocksForDay(week, dateUTC){
+      const dow = dateUTC.getUTCDay(); // 1..5
+      const key = weekDayKeys[dow - 1];
+      return scheduleData[week][key] || [];
+    }
+
+    function generateCalendar(){
+      const startISO = document.getElementById("start-date").value;
+      const startWeek = document.getElementById("start-week").value;
+
+      if (!startISO){
+        toast("Please enter a start date.");
+        return;
+      }
+
+      const selectedBlocks = getSelectedBlocks();
+      if (!selectedBlocks.length){
+        toast("Please select at least one block.");
+        return;
+      }
+
+      let endISO = null;
+      let perBlockCount = null;
+      let mergedLessonsTarget = null;
+
+      if (endMode === "date"){
+        endISO = document.getElementById("end-date").value;
+        if (!endISO){
+          toast("Please enter an end date.");
+          return;
+        }
+        if (endISO < startISO){
+          toast("End date must be on or after start date.");
+          return;
+        }
+      } else if (endMode === "per-block"){
+        perBlockCount = clampInt(parseFloat(document.getElementById("class-count").value));
+        if (!perBlockCount){
+          toast("Please enter the number of classes per selected block (>= 1).");
+          return;
+        }
+      } else if (endMode === "lessons"){
+        mergedLessonsTarget = clampInt(parseFloat(document.getElementById("lesson-count").value));
+        if (!mergedLessonsTarget){
+          toast("Please enter the number of lessons (merged) (>= 1).");
+          return;
+        }
+      }
+
+      const startDate = fromISODateUTC(startISO);
+      let d = new Date(startDate.getTime());
+
+      const blockMeetCount = {};
+      selectedBlocks.forEach(b => blockMeetCount[b] = 0);
+
+      generatedEntries = [];
+      const safetyMaxDays = 366 * 3;
+      let daysIterated = 0;
+
+      function done(){
+        if (endMode === "date"){
+          return toISODateUTC(d) > endISO;
+        }
+        if (endMode === "per-block"){
+          return selectedBlocks.every(b => blockMeetCount[b] >= perBlockCount);
+        }
+        const minCount = Math.min(...selectedBlocks.map(b => blockMeetCount[b]));
+        return minCount >= mergedLessonsTarget;
+      }
+
+      while (!done()){
+        daysIterated++;
+        if (daysIterated > safetyMaxDays){
+          toast("Safety stop: generation exceeded maximum range. Check your end rule.");
+          break;
         }
 
-        function parseDateFromString(dateStr) {
-            const [year, month, day] = dateStr.split('-').map(Number);
-            return new Date(Date.UTC(year, month - 1, day));
-        }
+        const iso = toISODateUTC(d);
 
-        function generateUnitCalendar() {
-            const startDateInput = document.getElementById('start-date').value;
-            const endOption = document.getElementById('end-option').value;
-            let endDateInput = document.getElementById('end-date').value;
-            let classCountInput = parseInt(document.getElementById('class-count').value);
-            const startWeek = document.getElementById('start-week').value;
+        if (isWeekdayUTC(d) && !blackoutDates.has(iso)){
+          const week = computeWeekForDate(startWeek, startISO, iso);
+          const todaysSchedule = getScheduleBlocksForDay(week, d);
 
-            if (!startDateInput) {
-                alert('Please enter a start date.');
-                return;
-            }
+          todaysSchedule.forEach(block => {
+            if (!selectedBlocks.includes(block)) return;
 
-            const startDate = parseDateFromString(startDateInput);
+            if (endMode === "per-block" && blockMeetCount[block] >= perBlockCount) return;
 
-            if (endOption === 'date' && !endDateInput) {
-                alert('Please enter an end date.');
-                return;
-            }
+            blockMeetCount[block]++;
 
-            if (endOption === 'class-count' && !classCountInput) {
-                alert('Please enter the number of classes.');
-                return;
-            }
+            const lessonNum = blockMeetCount[block];
+            if (endMode === "lessons" && lessonNum > mergedLessonsTarget) return;
 
-            const endDate = endOption === 'date' ? parseDateFromString(endDateInput) : null;
-
-            const selectedBlocks = Array.from(document.querySelectorAll('input[name="block"]:checked')).map(checkbox => checkbox.value);
-            if (selectedBlocks.length === 0) {
-                alert('Please select at least one block.');
-                return;
-            }
-
-            const calendarTable = document.getElementById('unit-calendar').getElementsByTagName('tbody')[0];
-            const catchUpContainer = document.getElementById('catch-up-container');
-            calendarTable.innerHTML = ''; // Clear existing calendar data
-            catchUpContainer.innerHTML = ''; // Clear existing catch up checkboxes
-
-            const weekDays = ['M', 'T', 'W', 'Th', 'F'];
-            const blueWeek = {
-                "monday": ["A", "B", "C", "D", "E"],
-                "tuesday": ["F", "G", "A", "B", "C"],
-                "wednesday": ["D", "E", "F", "G", "A"],
-                "thursday": ["B", "C", "D", "E", "F"],
-                "friday": ["G", "A", "B", "C", "D"]
-            };
-            const goldWeek = {
-                "monday": ["E", "F", "G", "A", "B"],
-                "tuesday": ["C", "D", "E", "F", "G"],
-                "wednesday": ["A", "B", "C", "D", "E"],
-                "thursday": ["F", "G", "A", "B", "C"],
-                "friday": ["D", "E", "F", "G"]
-            };
-
-            const scheduleData = { blue: blueWeek, gold: goldWeek };
-            let currentWeek = startWeek;
-            let currentDate = startDate;
-            dateEntries = [];
-
-            let classNumbers = {}; // Stores class numbers for each block
-            selectedBlocks.forEach(block => {
-                classNumbers[block] = 1; // Initialize class number for each block
+            generatedEntries.push({
+              type: "class",
+              dateISO: iso,
+              displayDate: `${dayShortUTC(d)} ${monthDayUTC(d)}`,
+              week,
+              block,
+              lessonNum
             });
-
-            let lastTeachingWeek = null; // Track the last teaching day to manage proper week alternation
-
-            while ((endOption === 'date' && currentDate <= endDate) || 
-                   (endOption === 'class-count' && Object.values(classNumbers).some(num => num <= classCountInput))) {
-
-                const dayOfWeek = currentDate.getUTCDay();
-                const formattedDate = formatDateToString(currentDate);
-
-                // Skip weekends
-                if (dayOfWeek === 0 || dayOfWeek === 6) {
-                    currentDate.setUTCDate(currentDate.getUTCDate() + 1);
-                    continue;
-                }
-
-                // Switch weeks every Monday or first teaching day of the week (in case of a catch up day)
-                if (dayOfWeek === 1 || (lastTeachingWeek !== currentWeek && lastTeachingWeek !== null)) {
-                    currentWeek = currentWeek === 'blue' ? 'gold' : 'blue';
-                }
-
-                const weekDayName = Object.keys(scheduleData[currentWeek])[dayOfWeek - 1];
-                const scheduleForDay = scheduleData[currentWeek][weekDayName];
-                const dateStr = `${weekDays[dayOfWeek - 1]} ${currentDate.getUTCMonth() + 1}/${currentDate.getUTCDate()}`;
-
-                scheduleForDay.forEach(block => {
-                    if (selectedBlocks.includes(block) && classNumbers[block] <= classCountInput) {
-                        dateEntries.push({
-                            type: 'class',
-                            classNum: classNumbers[block],
-                            block: block,
-                            displayDate: dateStr,
-                            week: currentWeek
-                        });
-                        classNumbers[block]++;
-                    }
-                });
-
-                lastTeachingWeek = currentWeek; // Update the last teaching week
-                currentDate.setUTCDate(currentDate.getUTCDate() + 1);
-            }
-
-            // ** Sort dates properly by date to avoid ordering issues **
-            dateEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-            // Store the initial date entries for restoring
-            initialDateEntries = JSON.parse(JSON.stringify(dateEntries));
-
-            // Populate the table and add checkboxes for Catch Up Days
-            populateTableAndCheckboxes();
-
-            // Show the buttons
-            document.getElementById('regenerate-button').style.display = 'inline-block';
-            document.getElementById('copy-button').style.display = 'inline-block';
-            document.getElementById('restore-button').style.display = 'inline-block';
+          });
         }
 
-        function populateTableAndCheckboxes() {
-            const calendarTable = document.getElementById('unit-calendar').getElementsByTagName('tbody')[0];
-            const catchUpContainer = document.getElementById('catch-up-container');
-            calendarTable.innerHTML = ''; // Clear existing calendar data
-            catchUpContainer.innerHTML = ''; // Clear existing catch up checkboxes
+        d = nextDayUTC(d);
+      }
 
-            let lastClassNumber = null;
-            let lastRow = null;
+      generatedEntries.sort((a,b) => {
+        if (a.lessonNum !== b.lessonNum) return a.lessonNum - b.lessonNum;
+        if (a.dateISO !== b.dateISO) return a.dateISO.localeCompare(b.dateISO);
+        return a.block.localeCompare(b.block);
+      });
 
-            dateEntries.forEach((entry, index) => {
-                const row = calendarTable.insertRow();
-                
-                if (entry.week === 'blue') {
-                    row.className = 'blue-week';
-                } else if (entry.week === 'gold') {
-                    row.className = 'gold-week';
-                }
+      initialGeneratedEntries = deepCopy(generatedEntries);
+      currentConfigSnapshot = {
+        startISO, startWeek, endMode, endISO, perBlockCount, mergedLessonsTarget,
+        selectedBlocks: [...selectedBlocks]
+      };
 
-                if (entry.classNum === lastClassNumber) {
-                    lastRow.cells[0].rowSpan = (lastRow.cells[0].rowSpan || 1) + 1;
-                    lastRow.cells[2].rowSpan = (lastRow.cells[2].rowSpan || 1) + 1;
-                    lastRow.cells[3].rowSpan = (lastRow.cells[3].rowSpan || 1) + 1;
-                    lastRow.cells[4].rowSpan = (lastRow.cells[4].rowSpan || 1) + 1;
-                    row.insertCell(0).style.display = 'none'; // Hide the merged cell
-                } else {
-                    lastClassNumber = entry.classNum;
-                    lastRow = row;
-                    const cell1 = row.insertCell(0);
-                    cell1.textContent = entry.classNum;
-                }
+      renderCalendarTable();
+      updateMetaUI();
+      showControlsAfterGenerate();
+      buildOffdaysListFromGenerated();
+    }
 
-                const cell2 = row.insertCell(1);
-                cell2.textContent = `${entry.displayDate} (${entry.block})`;
-                const cell3 = row.insertCell(2);
-                cell3.textContent = ''; // Topic
-                const cell4 = row.insertCell(3);
-                cell4.textContent = ''; // In-Class
-                const cell5 = row.insertCell(4);
-                cell5.textContent = ''; // Homework
+    /***********************
+     * Rendering           *
+     ***********************/
+    const tbody = document.querySelector("#unit-calendar tbody");
 
-                if (index > 0 && entry.classNum === dateEntries[index - 1].classNum) {
-                    cell3.style.display = 'none';
-                    cell4.style.display = 'none';
-                    cell5.style.display = 'none';
-                }
+    function renderCalendarTable(){
+      tbody.innerHTML = "";
 
-                const catchUpDiv = document.createElement('div');
-                catchUpDiv.className = 'catch-up-checkbox';
-                const catchUpCheckbox = document.createElement('input');
-                catchUpCheckbox.type = 'checkbox';
-                catchUpCheckbox.dataset.index = index;
-                catchUpDiv.appendChild(catchUpCheckbox);
-                const catchUpLabel = document.createElement('label');
-                catchUpLabel.textContent = `Catch Up (${entry.displayDate}, ${entry.block})`;
-                catchUpDiv.appendChild(catchUpLabel);
-                catchUpContainer.appendChild(catchUpDiv);
-            });
+      if (!generatedEntries.length){
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 5;
+        td.className = "emptyCell";
+        td.textContent = "No entries generated.";
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+        return;
+      }
+
+      const groups = new Map();
+      for (const e of generatedEntries){
+        if (!groups.has(e.lessonNum)) groups.set(e.lessonNum, []);
+        groups.get(e.lessonNum).push(e);
+      }
+
+      const lessonNums = Array.from(groups.keys()).sort((a,b)=>a-b);
+
+      lessonNums.forEach(lessonNum => {
+        const rows = groups.get(lessonNum);
+
+        rows.forEach((entry, idx) => {
+          const tr = document.createElement("tr");
+          tr.className = (entry.week === "blue") ? "wk-blue" : "wk-gold";
+
+          if (idx === 0){
+            const tdLesson = document.createElement("td");
+            tdLesson.className = "col-lesson";
+            tdLesson.textContent = lessonNum;
+            tdLesson.rowSpan = rows.length;
+            tr.appendChild(tdLesson);
+          }
+
+          const tdWhen = document.createElement("td");
+          tdWhen.className = "col-when";
+          tdWhen.innerHTML = `<div class="whenLine">${entry.displayDate} <span class="mut">(${entry.block})</span></div>`;
+          tr.appendChild(tdWhen);
+
+          if (idx === 0){
+            const tdTitle = document.createElement("td");
+            tdTitle.className = "col-title";
+            tdTitle.rowSpan = rows.length;
+            tdTitle.textContent = "";
+            tr.appendChild(tdTitle);
+
+            const tdIn = document.createElement("td");
+            tdIn.className = "col-in";
+            tdIn.rowSpan = rows.length;
+            tdIn.textContent = "";
+            tr.appendChild(tdIn);
+
+            const tdHw = document.createElement("td");
+            tdHw.className = "col-hw";
+            tdHw.rowSpan = rows.length;
+            tdHw.textContent = "";
+            tr.appendChild(tdHw);
+          }
+
+          tbody.appendChild(tr);
+        });
+      });
+    }
+
+    function updateMetaUI(){
+      if (!currentConfigSnapshot){
+        meta.innerHTML = `<div><b>Status:</b> Not generated yet.</div><div>Tip: add blackout dates first so you don’t have to “catch up” manually later.</div>`;
+        hide(counts);
+        return;
+      }
+
+      const { startISO, startWeek, endMode, endISO, perBlockCount, mergedLessonsTarget, selectedBlocks } = currentConfigSnapshot;
+
+      const endDesc =
+        endMode === "date" ? `End by date: <b>${endISO}</b>` :
+        endMode === "per-block" ? `End by classes per block: <b>${perBlockCount}</b>` :
+        `End by merged lessons: <b>${mergedLessonsTarget}</b>`;
+
+      const bl = uniqSortedISO(blackoutDates);
+      const blkDesc = bl.length ? `Blackout dates: <b>${bl.length}</b>` : `Blackout dates: <b>0</b>`;
+
+      meta.innerHTML = `
+        <div><b>Status:</b> Generated.</div>
+        <div>Start: <b>${startISO}</b> • Starting week: <b>${startWeek.toUpperCase()}</b></div>
+        <div>${endDesc}</div>
+        <div>Blocks: <b>${selectedBlocks.join(", ")}</b> • ${blkDesc}</div>
+      `;
+
+      const lessons = new Set(generatedEntries.map(e => e.lessonNum));
+      const dates = new Set(generatedEntries.map(e => e.dateISO));
+      const entriesCount = generatedEntries.length;
+
+      counts.textContent = `Lessons: ${lessons.size} • Teaching dates: ${dates.size} • Meetings listed: ${entriesCount}`;
+      show(counts);
+    }
+
+    function showControlsAfterGenerate(){
+      show(copyHtmlBtn);
+      show(copyTsvBtn);
+      show(dlCsvBtn);
+      show(restoreBtn);
+      show(catchupRow);
+      openOffdaysBtn.style.display = "";
+      hide(applyOffdaysBtn);
+      hide(offdaysBox);
+    }
+
+    /***********************
+     * Off-days from list  *
+     ***********************/
+    function buildOffdaysListFromGenerated(){
+      const uniqDates = Array.from(new Set(generatedEntries.map(e => e.dateISO))).sort((a,b)=>a.localeCompare(b));
+      offdaysList.innerHTML = "";
+
+      if (!uniqDates.length){
+        offdaysList.innerHTML = `<div class="emptyCell">No teaching dates to show.</div>`;
+        return;
+      }
+
+      uniqDates.forEach(iso => {
+        const d = fromISODateUTC(iso);
+        const label = `${dayShortUTC(d)} ${monthDayUTC(d)} (${iso})`;
+
+        const row = document.createElement("label");
+        row.style.display = "flex";
+        row.style.alignItems = "center";
+        row.style.gap = "10px";
+        row.style.padding = "6px 8px";
+        row.style.border = "1px solid var(--line)";
+        row.style.borderRadius = "12px";
+        row.style.background = "#fff";
+        row.style.cursor = "pointer";
+
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.dataset.iso = iso;
+
+        const span = document.createElement("span");
+        span.textContent = label;
+        span.style.fontFamily = "var(--mono)";
+        span.style.fontSize = "12px";
+        span.style.color = "var(--ink)";
+        span.style.fontWeight = "800";
+
+        row.appendChild(cb);
+        row.appendChild(span);
+        offdaysList.appendChild(row);
+      });
+    }
+
+    openOffdaysBtn.addEventListener("click", () => {
+      show(offdaysBox);
+      show(applyOffdaysBtn);
+      applyOffdaysBtn.style.display = "";
+    });
+
+    applyOffdaysBtn.addEventListener("click", () => {
+      const checked = offdaysList.querySelectorAll('input[type="checkbox"]:checked');
+      if (!checked.length){
+        toast("Select at least one date to mark as no school.");
+        return;
+      }
+      let added = 0;
+      checked.forEach(cb => {
+        const iso = cb.dataset.iso;
+        if (!blackoutDates.has(iso)){
+          blackoutDates.add(iso);
+          added++;
         }
+      });
+      renderBlackoutChips();
+      toast(`Added ${added} blackout date(s). Regenerating calendar...`);
+      generateCalendar();
+    });
 
-        function applyCatchUpDays() {
-            const catchUpCheckboxes = document.querySelectorAll('.catch-up-checkbox input:checked');
-            catchUpCheckboxes.forEach(checkbox => {
-                const index = parseInt(checkbox.dataset.index);
-                const entry = dateEntries[index];
+    /***********************
+     * Restore             *
+     ***********************/
+    restoreBtn.addEventListener("click", () => {
+      if (!initialGeneratedEntries){
+        toast("Nothing to restore yet.");
+        return;
+      }
+      generatedEntries = deepCopy(initialGeneratedEntries);
+      renderCalendarTable();
+      toast("Restored the initial generated calendar (without changing blackout dates).");
+    });
 
-                if (entry.type === 'class') {
-                    entry.classNum = null;
-                }
-            });
+    /***********************
+     * Copy / Export       *
+     ***********************/
+    function tableToTSV(){
+      const rows = [];
+      rows.push(["Lesson #","Day/Date (Block)","Lesson Title","In-class","Homework"]);
 
-            let classNumbers = {};
-            dateEntries.forEach(entry => {
-                if (entry.type === 'class' && entry.classNum === null) {
-                    return;
-                }
+      const lessonMap = new Map();
+      generatedEntries.forEach(e => {
+        if (!lessonMap.has(e.lessonNum)) lessonMap.set(e.lessonNum, []);
+        lessonMap.get(e.lessonNum).push(e);
+      });
 
-                if (entry.type === 'class') {
-                    if (!classNumbers[entry.block]) {
-                        classNumbers[entry.block] = 1;
-                    } else {
-                        classNumbers[entry.block]++;
-                    }
-                    entry.classNum = classNumbers[entry.block];
-                }
-            });
+      const lessonNums = Array.from(lessonMap.keys()).sort((a,b)=>a-b);
+      lessonNums.forEach(ln => {
+        const arr = lessonMap.get(ln).slice().sort((a,b)=>{
+          if (a.dateISO !== b.dateISO) return a.dateISO.localeCompare(b.dateISO);
+          return a.block.localeCompare(b.block);
+        });
+        arr.forEach((e, idx) => {
+          const lessonVal = (idx===0) ? String(ln) : "";
+          rows.push([lessonVal, `${e.displayDate} (${e.block})`, "", "", ""]);
+        });
+      });
 
-            populateTableAndCheckboxes();
+      return rows
+        .map(r => r.map(cell => String(cell).replace(/\t/g," ").replace(/\r?\n/g," ")).join("\t"))
+        .join("\n");
+    }
+
+    function buildStyledTableHTML(){
+      const lessonMap = new Map();
+      generatedEntries.forEach(e => {
+        if (!lessonMap.has(e.lessonNum)) lessonMap.set(e.lessonNum, []);
+        lessonMap.get(e.lessonNum).push(e);
+      });
+      const lessonNums = Array.from(lessonMap.keys()).sort((a,b)=>a-b);
+
+      const thStyle =
+        "background:#2D68C4;color:#fff;font-weight:700;border:1px solid #000;padding:8px;text-align:left;font-family:Arial,sans-serif;font-size:11px;";
+      const tdBase =
+        "border:1px solid #000;padding:8px;vertical-align:top;font-family:Arial,sans-serif;font-size:11px;";
+      const tdLessonStyle = tdBase + "font-weight:700;white-space:nowrap;";
+      const tdWhenStyle = tdBase + "white-space:nowrap;";
+      const cellBlue = "background:#B3CDE0;";
+      const cellGold = "background:#FBE6C5;";
+
+      let html = "";
+      html += `<table style="border-collapse:collapse;width:100%;max-width:900px;">`;
+      html += `<thead><tr>`;
+      html += `<th style="${thStyle}">Lesson #</th>`;
+      html += `<th style="${thStyle}">Day/Date (Block)</th>`;
+      html += `<th style="${thStyle}">Lesson Title</th>`;
+      html += `<th style="${thStyle}">In-class</th>`;
+      html += `<th style="${thStyle}">Homework</th>`;
+      html += `</tr></thead><tbody>`;
+
+      for (const ln of lessonNums){
+        const arr = lessonMap.get(ln).slice().sort((a,b)=>{
+          if (a.dateISO !== b.dateISO) return a.dateISO.localeCompare(b.dateISO);
+          return a.block.localeCompare(b.block);
+        });
+
+        arr.forEach((e, idx) => {
+          const bg = (e.week === "blue") ? cellBlue : cellGold;
+
+          html += `<tr>`;
+          if (idx === 0){
+            html += `<td style="${tdLessonStyle + bg}" rowspan="${arr.length}">${ln}</td>`;
+          }
+          html += `<td style="${tdWhenStyle + bg}">${e.displayDate} (${e.block})</td>`;
+          if (idx === 0){
+            html += `<td style="${tdBase + bg}" rowspan="${arr.length}"></td>`;
+            html += `<td style="${tdBase + bg}" rowspan="${arr.length}"></td>`;
+            html += `<td style="${tdBase + bg}" rowspan="${arr.length}"></td>`;
+          }
+          html += `</tr>`;
+        });
+      }
+
+      html += `</tbody></table>`;
+      return html;
+    }
+
+    async function copyHTMLTable(){
+      if (!generatedEntries.length){
+        toast("Nothing to copy yet. Generate a calendar first.");
+        return;
+      }
+
+      const html = buildStyledTableHTML();
+      const text = tableToTSV();
+
+      try{
+        if (navigator.clipboard && window.ClipboardItem){
+          const item = new ClipboardItem({
+            "text/html": new Blob([html], { type: "text/html" }),
+            "text/plain": new Blob([text], { type: "text/plain" })
+          });
+          await navigator.clipboard.write([item]);
+          toast("Copied styled table (with colors).");
+          return;
         }
+      } catch (e) {}
 
-        function copyTable() {
-            const table = document.getElementById('unit-calendar');
-            const range = document.createRange();
-            const selection = window.getSelection();
+      const container = document.createElement("div");
+      container.style.position = "fixed";
+      container.style.left = "-9999px";
+      container.innerHTML = html;
+      document.body.appendChild(container);
 
-            range.selectNodeContents(table);
-            selection.removeAllRanges();
-            selection.addRange(range);
+      const range = document.createRange();
+      range.selectNodeContents(container);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
 
-            try {
-                document.execCommand('copy');
-                alert('Calendar copied to clipboard');
-            } catch (err) {
-                alert('Failed to copy calendar');
-            }
-        }
+      try{
+        document.execCommand("copy");
+        toast("Copied styled table (fallback).");
+      } catch (e){
+        toast("Copy failed. Try Copy (TSV) or Download CSV.");
+      }
 
-        function restoreInitialDates() {
-            dateEntries = JSON.parse(JSON.stringify(initialDateEntries));
-            populateTableAndCheckboxes();
-        }
-    </script>
+      sel.removeAllRanges();
+      document.body.removeChild(container);
+    }
+
+    function copyTSV(){
+      const tsv = tableToTSV();
+      navigator.clipboard?.writeText(tsv)
+        .then(() => toast("Copied TSV to clipboard (paste into Google Sheets)."))
+        .catch(() => {
+          const ta = document.createElement("textarea");
+          ta.value = tsv;
+          document.body.appendChild(ta);
+          ta.select();
+          try{
+            document.execCommand("copy");
+            toast("Copied TSV to clipboard (fallback).");
+          } catch(e){
+            toast("Copy failed. You can manually copy from a text editor.");
+          }
+          document.body.removeChild(ta);
+        });
+    }
+
+    function downloadCSV(){
+      const rows = [];
+      rows.push(["Lesson #","Day/Date (Block)","Lesson Title","In-class","Homework"]);
+
+      const lessonMap = new Map();
+      generatedEntries.forEach(e => {
+        if (!lessonMap.has(e.lessonNum)) lessonMap.set(e.lessonNum, []);
+        lessonMap.get(e.lessonNum).push(e);
+      });
+
+      const lessonNums = Array.from(lessonMap.keys()).sort((a,b)=>a-b);
+      lessonNums.forEach(ln => {
+        const arr = lessonMap.get(ln).slice().sort((a,b)=>{
+          if (a.dateISO !== b.dateISO) return a.dateISO.localeCompare(b.dateISO);
+          return a.block.localeCompare(b.block);
+        });
+        arr.forEach((e, idx) => {
+          const lessonVal = (idx===0) ? String(ln) : "";
+          rows.push([lessonVal, `${e.displayDate} (${e.block})`, "", "", ""]);
+        });
+      });
+
+      const csv = rows.map(r => r.map(cell => {
+        const s = String(cell);
+        const escaped = s.replace(/"/g,'""');
+        return `"${escaped}"`;
+      }).join(",")).join("\n");
+
+      const blob = new Blob([csv], { type:"text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "unit_calendar.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    copyHtmlBtn.addEventListener("click", copyHTMLTable);
+    copyTsvBtn.addEventListener("click", copyTSV);
+    dlCsvBtn.addEventListener("click", downloadCSV);
+
+    /***********************
+     * Generate handler    *
+     ***********************/
+    generateBtn.addEventListener("click", generateCalendar);
+
+    /***********************
+     * Misc usability      *
+     ***********************/
+    blocksWrap.addEventListener("change", (e) => {
+      const cb = e.target.closest('input[type="checkbox"][name="block"]');
+      if (!cb) return;
+      const lab = cb.closest(".blk");
+      if (lab) lab.classList.toggle("checked", cb.checked);
+    });
+  </script>
 </body>
 </html>
