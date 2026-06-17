@@ -574,6 +574,7 @@
             <button type="button" class="ghost" id="copy-tsv-btn" style="display:none;">Copy (TSV for Sheets)</button>
             <button type="button" class="ghost" id="dl-doc-btn" style="display:none;">Download .doc</button>
             <button type="button" class="ghost" id="dl-csv-btn" style="display:none;">Download CSV</button>
+            <button type="button" class="danger" id="reset-all-btn">Reset all</button>
           </div>
         </div>
 
@@ -705,8 +706,8 @@
       if (!text.trim()) return "&nbsp;";
       return text.split("\n").map(line => {
         const safe = escapeHTML(line);
-        return safe ? safe : "&nbsp;";
-      }).join("<br>");
+        return `<p class="MsoNormal" style="margin:0in;margin-bottom:0in;mso-margin-top-alt:0in;mso-margin-bottom-alt:0in;line-height:10pt;mso-line-height-rule:exactly;font-family:Garamond,Georgia,serif;font-size:10pt;">${safe ? safe : "&nbsp;"}</p>`;
+      }).join("");
     }
 
     function captureCurrentEdits(){
@@ -1004,6 +1005,7 @@
     const copyTsvBtn = document.getElementById("copy-tsv-btn");
     const dlDocBtn = document.getElementById("dl-doc-btn");
     const dlCsvBtn = document.getElementById("dl-csv-btn");
+    const resetAllBtn = document.getElementById("reset-all-btn");
 
     const offdaysBox = document.getElementById("offdaysBox");
     const offdaysList = document.getElementById("offdaysList");
@@ -1284,6 +1286,54 @@
       hide(offdaysBox);
     }
 
+    function hideGeneratedControls(){
+      hide(saveLocalBtn);
+      hide(copyHtmlBtn);
+      hide(copyTsvBtn);
+      hide(dlDocBtn);
+      hide(dlCsvBtn);
+      hide(restoreBtn);
+      hide(catchupRow);
+      hide(applyOffdaysBtn);
+      hide(offdaysBox);
+      hide(counts);
+    }
+
+    function resetAll(){
+      window.clearTimeout(saveTimer);
+      localStorage.removeItem(STORAGE_KEY);
+      blackoutDates = new Set();
+      generatedEntries = [];
+      initialGeneratedEntries = null;
+      currentConfigSnapshot = null;
+      lessonNotes = {};
+
+      document.getElementById("start-date").value = "";
+      document.getElementById("start-week").value = "blue";
+      document.getElementById("end-date").value = "";
+      document.getElementById("class-count").value = "";
+      document.getElementById("lesson-count").value = "";
+      blackoutAdd.value = "";
+      blackoutRangeStart.value = "";
+      blackoutRangeEnd.value = "";
+      blackoutPaste.value = "";
+      if (icsFile) icsFile.value = "";
+
+      blocksWrap.querySelectorAll('input[name="block"]').forEach(cb => {
+        cb.checked = false;
+        const lab = cb.closest(".blk");
+        if (lab) lab.classList.remove("checked");
+      });
+
+      setEndMode("date");
+      renderBlackoutChips();
+      renderCalendarTable();
+      updateMetaUI();
+      hideGeneratedControls();
+      offdaysList.innerHTML = "";
+      toast("Reset complete. The saved local calendar was cleared.");
+    }
+
     function collectFormState(){
       return {
         startISO: document.getElementById("start-date").value,
@@ -1491,24 +1541,26 @@
 
     function buildStyledTableHTML(){
       const groups = groupedLessons();
+      const wordFontFace = "font-family:Garamond,Georgia,serif;mso-ascii-font-family:Garamond;mso-hansi-font-family:Garamond;mso-bidi-font-family:Garamond;";
+      const wordPara = "margin:0in;margin-bottom:0in;mso-margin-top-alt:0in;mso-margin-bottom-alt:0in;line-height:10pt;mso-line-height-rule:exactly;";
       const thStyle =
-        "background:#2D68C4;color:#fff;font-weight:700;border:1pt solid #000;padding:4pt;text-align:left;font-family:Garamond,Georgia,serif;font-size:10pt;line-height:1;mso-line-height-rule:exactly;mso-margin-top-alt:0in;mso-margin-bottom-alt:0in;";
+        `background:#2D68C4;color:#fff;font-weight:700;border:1pt solid #000;padding:4pt;text-align:left;${wordFontFace}font-size:10pt;${wordPara}`;
       const tdBase =
-        "border:1pt solid #000;padding:4pt;vertical-align:top;font-family:Garamond,Georgia,serif;font-size:10pt;line-height:1;mso-line-height-rule:exactly;mso-margin-top-alt:0in;mso-margin-bottom-alt:0in;";
+        `border:1pt solid #000;padding:4pt;vertical-align:top;${wordFontFace}font-size:10pt;${wordPara}`;
       const tdLessonStyle = tdBase + "font-weight:700;white-space:nowrap;";
       const tdWhenStyle = tdBase + "white-space:nowrap;";
       const cellBlue = "background:#B3CDE0;";
       const cellGold = "background:#FBE6C5;";
 
       let html = "";
-      html += `<table border="1" cellspacing="0" cellpadding="0" style="border-collapse:collapse;table-layout:fixed;width:7.25in;mso-table-lspace:0pt;mso-table-rspace:0pt;font-family:Garamond,Georgia,serif;">`;
+      html += `<table border="1" cellspacing="0" cellpadding="0" style="border-collapse:collapse;table-layout:fixed;width:7.25in;mso-table-lspace:0pt;mso-table-rspace:0pt;${wordFontFace}">`;
       html += `<colgroup><col style="width:.65in"><col style="width:1.1in"><col style="width:1.35in"><col style="width:2.35in"><col style="width:1.8in"></colgroup>`;
       html += `<thead><tr>`;
-      html += `<th style="${thStyle}">Lesson #</th>`;
-      html += `<th style="${thStyle}">Day/Date (Block)</th>`;
-      html += `<th style="${thStyle}">Lesson Title</th>`;
-      html += `<th style="${thStyle}">In-class</th>`;
-      html += `<th style="${thStyle}">Homework</th>`;
+      html += `<th style="${thStyle}"><p class="MsoNormal" style="${wordPara}${wordFontFace}font-size:10pt;font-weight:700;">Lesson #</p></th>`;
+      html += `<th style="${thStyle}"><p class="MsoNormal" style="${wordPara}${wordFontFace}font-size:10pt;font-weight:700;">Day/Date (Block)</p></th>`;
+      html += `<th style="${thStyle}"><p class="MsoNormal" style="${wordPara}${wordFontFace}font-size:10pt;font-weight:700;">Lesson Title</p></th>`;
+      html += `<th style="${thStyle}"><p class="MsoNormal" style="${wordPara}${wordFontFace}font-size:10pt;font-weight:700;">In-class</p></th>`;
+      html += `<th style="${thStyle}"><p class="MsoNormal" style="${wordPara}${wordFontFace}font-size:10pt;font-weight:700;">Homework</p></th>`;
       html += `</tr></thead><tbody>`;
 
       for (const group of groups){
@@ -1517,9 +1569,9 @@
 
           html += `<tr>`;
           if (idx === 0){
-            html += `<td style="${tdLessonStyle + bg}" rowspan="${group.rows.length}">${group.lessonNum}</td>`;
+            html += `<td style="${tdLessonStyle + bg}" rowspan="${group.rows.length}"><p class="MsoNormal" style="${wordPara}${wordFontFace}font-size:10pt;font-weight:700;">${group.lessonNum}</p></td>`;
           }
-          html += `<td style="${tdWhenStyle + bg}">${e.displayDate} (${e.block})</td>`;
+          html += `<td style="${tdWhenStyle + bg}"><p class="MsoNormal" style="${wordPara}${wordFontFace}font-size:10pt;">${e.displayDate} (${e.block})</p></td>`;
           if (idx === 0){
             html += `<td style="${tdBase + bg}" rowspan="${group.rows.length}">${textToWordHTML(group.note.title)}</td>`;
             html += `<td style="${tdBase + bg}" rowspan="${group.rows.length}">${textToWordHTML(group.note.inClass)}</td>`;
@@ -1543,8 +1595,8 @@
   <style>
     @page WordSection1 { size: 8.5in 11in; margin: .5in .5in .5in .5in; }
     div.WordSection1 { page: WordSection1; }
-    body, table, td, th { font-family: Garamond, Georgia, serif; font-size: 10pt; line-height: 1; }
-    p { margin-top: 0; margin-bottom: 0; line-height: 1; mso-line-height-rule: exactly; }
+    body, table, td, th, p, span { font-family: Garamond, Georgia, serif; mso-ascii-font-family: Garamond; mso-hansi-font-family: Garamond; mso-bidi-font-family: Garamond; font-size: 10pt; line-height: 10pt; mso-line-height-rule: exactly; }
+    p, .MsoNormal { margin: 0in; margin-bottom: 0in; mso-margin-top-alt: 0in; mso-margin-bottom-alt: 0in; line-height: 10pt; mso-line-height-rule: exactly; }
     table { border-collapse: collapse; table-layout: fixed; width: 7.25in; }
     td, th { border: 1pt solid #000; padding: 4pt; vertical-align: top; }
   </style>
@@ -1673,6 +1725,7 @@
     copyTsvBtn.addEventListener("click", copyTSV);
     dlDocBtn.addEventListener("click", downloadDoc);
     dlCsvBtn.addEventListener("click", downloadCSV);
+    resetAllBtn.addEventListener("click", resetAll);
 
     /***********************
      * Generate handler    *
