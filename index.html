@@ -31,8 +31,8 @@
                   radial-gradient(900px 420px at 85% 18%, rgba(30,79,142,.10), transparent 60%),
                   var(--bg);
       color:var(--ink);
-      font-family:var(--sans);
-      line-height:1.35;
+      font-family:var(--serif);
+      line-height:1;
     }
 
     header{
@@ -109,7 +109,7 @@
     }
 
     input[type="date"], input[type="number"], select, textarea, button{
-      font-family: var(--sans);
+      font-family: var(--serif);
       font-size: 14px;
     }
 
@@ -131,9 +131,9 @@
     textarea{
       min-height: 92px;
       resize: vertical;
-      font-family: var(--mono);
+      font-family: var(--serif);
       font-size: 12px;
-      line-height: 1.35;
+      line-height: 1;
     }
 
     .row2{
@@ -309,9 +309,9 @@
 
     table{
       width:100%;
-      border-collapse: separate;
+      border-collapse: collapse;
       border-spacing: 0;
-      overflow:hidden;
+      table-layout: fixed;
       border-radius: 14px;
       border: 1px solid var(--line);
       background:#fff;
@@ -328,30 +328,38 @@
       text-transform: uppercase;
       padding: 10px 10px;
       border-bottom: 1px solid rgba(255,255,255,.22);
+      border-right: 1px solid rgba(255,255,255,.30);
       white-space: nowrap;
+      font-family: var(--serif);
+      line-height: 1;
     }
     tbody td{
       font-size: 13px;
       padding: 10px 10px;
       border-bottom: 1px solid var(--line);
+      border-right: 1px solid var(--line);
       vertical-align: top;
+      font-family: var(--serif);
+      line-height: 1;
     }
+    thead th:last-child, tbody td:last-child{ border-right:none; }
     tbody tr:last-child td{ border-bottom:none; }
 
     .wk-blue td{ background: rgba(179,205,224,.45); }
     .wk-gold td{ background: rgba(251,230,197,.50); }
 
-    .col-lesson{ width: 88px; font-weight: 900; }
-    .col-when{ width: 180px; white-space: nowrap; font-family: var(--mono); font-size: 12px; }
-    .col-title{ width: 200px; }
-    .col-in{ width: 260px; }
-    .col-hw{ width: 220px; }
+    .col-lesson{ width: 70px; font-weight: 900; }
+    .col-when{ width: 130px; white-space: nowrap; font-size: 12px; }
+    .col-title{ width: 22%; }
+    .col-in{ width: 34%; }
+    .col-hw{ width: 25%; }
 
     .whenLine{
-      font-family: var(--mono);
+      font-family: var(--serif);
       font-size: 12px;
-      margin: 0 0 4px 0;
+      margin: 0;
       color: #0f172a;
+      line-height: 1;
     }
     .whenLine .mut{ color: var(--muted); font-weight: 700; }
 
@@ -390,12 +398,28 @@
 
     .mutedBadge{
       font-size: 11px;
-      font-family: var(--mono);
+      font-family: var(--serif);
       color: var(--muted);
       background: rgba(17,24,39,.04);
       border: 1px solid var(--line);
       padding: 6px 10px;
       border-radius: 999px;
+    }
+
+    .editableCell{
+      min-height: 44px;
+      outline: none;
+      white-space: pre-wrap;
+      line-height: 1;
+    }
+    .editableCell:focus{
+      box-shadow: inset 0 0 0 2px rgba(45,104,196,.35);
+      background: rgba(255,255,255,.45);
+    }
+    .editableCell:empty::before{
+      content: attr(data-placeholder);
+      color: #9ca3af;
+      font-style: italic;
     }
   </style>
 </head>
@@ -545,8 +569,10 @@
           </div>
 
           <div class="smallControls">
-            <button type="button" class="ghost" id="copy-html-btn" style="display:none;">Copy (HTML table)</button>
+            <button type="button" class="ghost" id="save-local-btn" style="display:none;">Save current version</button>
+            <button type="button" class="ghost" id="copy-html-btn" style="display:none;">Copy for Word</button>
             <button type="button" class="ghost" id="copy-tsv-btn" style="display:none;">Copy (TSV for Sheets)</button>
+            <button type="button" class="ghost" id="dl-doc-btn" style="display:none;">Download .doc</button>
             <button type="button" class="ghost" id="dl-csv-btn" style="display:none;">Download CSV</button>
           </div>
         </div>
@@ -617,6 +643,8 @@
     let initialGeneratedEntries = null;     // deep copy for restore
     let currentConfigSnapshot = null;       // for off-days UI
     let endMode = "date";                   // "date" | "per-block" | "lessons"
+    let lessonNotes = {};                    // keyed by merged Lesson #
+    const STORAGE_KEY = "unit-calendar-generator:v2";
 
     /***********************
      * Helpers            *
@@ -656,6 +684,56 @@
 
     function deepCopy(obj){
       return JSON.parse(JSON.stringify(obj));
+    }
+
+    function ensureLessonNote(lessonNum){
+      const key = String(lessonNum);
+      if (!lessonNotes[key]) lessonNotes[key] = { title: "", inClass: "", homework: "" };
+      return lessonNotes[key];
+    }
+
+    function escapeHTML(value){
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function textToWordHTML(value){
+      const text = String(value ?? "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+      if (!text.trim()) return "&nbsp;";
+      return text.split("\n").map(line => {
+        const safe = escapeHTML(line);
+        return safe ? safe : "&nbsp;";
+      }).join("<br>");
+    }
+
+    function captureCurrentEdits(){
+      document.querySelectorAll("[data-note-field][data-lesson]").forEach(cell => {
+        const note = ensureLessonNote(cell.dataset.lesson);
+        note[cell.dataset.noteField] = cell.innerText.replace(/\u00a0/g, " ").trimEnd();
+      });
+    }
+
+    function getLessonNoteValue(lessonNum, field){
+      const note = ensureLessonNote(lessonNum);
+      return note[field] || "";
+    }
+
+    function compactLessonNotes(){
+      const compact = {};
+      Object.keys(lessonNotes).forEach(key => {
+        const note = lessonNotes[key] || {};
+        if ((note.title || note.inClass || note.homework)){
+          compact[key] = {
+            title: note.title || "",
+            inClass: note.inClass || "",
+            homework: note.homework || ""
+          };
+        }
+      });
+      lessonNotes = compact;
     }
 
     function uniqSortedISO(set){
@@ -732,6 +810,7 @@
           const cb = lab.querySelector("input");
           cb.checked = !cb.checked;
           lab.classList.toggle("checked", cb.checked);
+          scheduleAutoSave();
           e.preventDefault();
         });
         blocksWrap.appendChild(lab);
@@ -752,12 +831,11 @@
     const endPerBlockBox = document.getElementById("end-per-block-box");
     const endLessonsBox = document.getElementById("end-lessons-box");
 
-    endSeg.addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-mode]");
-      if (!btn) return;
-      endMode = btn.dataset.mode;
-      Array.from(endSeg.querySelectorAll("button")).forEach(b => b.classList.toggle("active", b === btn));
-
+    function setEndMode(mode){
+      endMode = ["date", "per-block", "lessons"].includes(mode) ? mode : "date";
+      Array.from(endSeg.querySelectorAll("button")).forEach(b => {
+        b.classList.toggle("active", b.dataset.mode === endMode);
+      });
       if (endMode === "date"){
         show(endDateBox); hide(endPerBlockBox); hide(endLessonsBox);
       } else if (endMode === "per-block"){
@@ -765,6 +843,12 @@
       } else {
         hide(endDateBox); hide(endPerBlockBox); show(endLessonsBox);
       }
+    }
+
+    endSeg.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-mode]");
+      if (!btn) return;
+      setEndMode(btn.dataset.mode);
     });
 
     /***********************
@@ -915,8 +999,10 @@
 
     const meta = document.getElementById("meta");
     const counts = document.getElementById("counts");
+    const saveLocalBtn = document.getElementById("save-local-btn");
     const copyHtmlBtn = document.getElementById("copy-html-btn");
     const copyTsvBtn = document.getElementById("copy-tsv-btn");
+    const dlDocBtn = document.getElementById("dl-doc-btn");
     const dlCsvBtn = document.getElementById("dl-csv-btn");
 
     const offdaysBox = document.getElementById("offdaysBox");
@@ -961,6 +1047,7 @@
     }
 
     function generateCalendar(){
+      captureCurrentEdits();
       const startISO = document.getElementById("start-date").value;
       const startWeek = document.getElementById("start-week").value;
 
@@ -1077,6 +1164,7 @@
       updateMetaUI();
       showControlsAfterGenerate();
       buildOffdaysListFromGenerated();
+      saveCurrentVersion(false);
     }
 
     /***********************
@@ -1130,19 +1218,19 @@
             const tdTitle = document.createElement("td");
             tdTitle.className = "col-title";
             tdTitle.rowSpan = rows.length;
-            tdTitle.textContent = "";
+            tdTitle.innerHTML = `<div class="editableCell" contenteditable="true" data-lesson="${lessonNum}" data-note-field="title" data-placeholder="Lesson title">${escapeHTML(getLessonNoteValue(lessonNum, "title"))}</div>`;
             tr.appendChild(tdTitle);
 
             const tdIn = document.createElement("td");
             tdIn.className = "col-in";
             tdIn.rowSpan = rows.length;
-            tdIn.textContent = "";
+            tdIn.innerHTML = `<div class="editableCell" contenteditable="true" data-lesson="${lessonNum}" data-note-field="inClass" data-placeholder="In-class">${escapeHTML(getLessonNoteValue(lessonNum, "inClass"))}</div>`;
             tr.appendChild(tdIn);
 
             const tdHw = document.createElement("td");
             tdHw.className = "col-hw";
             tdHw.rowSpan = rows.length;
-            tdHw.textContent = "";
+            tdHw.innerHTML = `<div class="editableCell" contenteditable="true" data-lesson="${lessonNum}" data-note-field="homework" data-placeholder="Homework">${escapeHTML(getLessonNoteValue(lessonNum, "homework"))}</div>`;
             tr.appendChild(tdHw);
           }
 
@@ -1184,14 +1272,99 @@
     }
 
     function showControlsAfterGenerate(){
+      show(saveLocalBtn);
       show(copyHtmlBtn);
       show(copyTsvBtn);
+      show(dlDocBtn);
       show(dlCsvBtn);
       show(restoreBtn);
       show(catchupRow);
       openOffdaysBtn.style.display = "";
       hide(applyOffdaysBtn);
       hide(offdaysBox);
+    }
+
+    function collectFormState(){
+      return {
+        startISO: document.getElementById("start-date").value,
+        startWeek: document.getElementById("start-week").value,
+        endMode,
+        endISO: document.getElementById("end-date").value,
+        perBlockCount: document.getElementById("class-count").value,
+        mergedLessonsTarget: document.getElementById("lesson-count").value,
+        selectedBlocks: getSelectedBlocks(),
+        blackoutDates: uniqSortedISO(blackoutDates)
+      };
+    }
+
+    function saveCurrentVersion(showMessage = true){
+      captureCurrentEdits();
+      compactLessonNotes();
+      const payload = {
+        savedAt: new Date().toISOString(),
+        form: collectFormState(),
+        generatedEntries,
+        initialGeneratedEntries,
+        currentConfigSnapshot,
+        lessonNotes
+      };
+      try{
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        if (showMessage) toast("Saved this calendar in your browser.");
+        updateMetaUI();
+        return true;
+      } catch(e){
+        if (showMessage) toast("Save failed. Your browser may be blocking local storage.");
+        return false;
+      }
+    }
+
+    function applySavedForm(form){
+      if (!form) return;
+      document.getElementById("start-date").value = form.startISO || "";
+      document.getElementById("start-week").value = form.startWeek || "blue";
+      document.getElementById("end-date").value = form.endISO || "";
+      document.getElementById("class-count").value = form.perBlockCount || "";
+      document.getElementById("lesson-count").value = form.mergedLessonsTarget || "";
+      setEndMode(form.endMode || "date");
+
+      blocksWrap.querySelectorAll('input[name="block"]').forEach(cb => {
+        cb.checked = (form.selectedBlocks || []).includes(cb.value);
+        const lab = cb.closest(".blk");
+        if (lab) lab.classList.toggle("checked", cb.checked);
+      });
+
+      blackoutDates = new Set(form.blackoutDates || []);
+      renderBlackoutChips();
+    }
+
+    function loadSavedVersion(){
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+      try{
+        const saved = JSON.parse(raw);
+        applySavedForm(saved.form);
+        generatedEntries = Array.isArray(saved.generatedEntries) ? saved.generatedEntries : [];
+        initialGeneratedEntries = Array.isArray(saved.initialGeneratedEntries) ? saved.initialGeneratedEntries : deepCopy(generatedEntries);
+        currentConfigSnapshot = saved.currentConfigSnapshot || null;
+        lessonNotes = saved.lessonNotes || {};
+        renderCalendarTable();
+        updateMetaUI();
+        if (generatedEntries.length){
+          showControlsAfterGenerate();
+          buildOffdaysListFromGenerated();
+        }
+        return true;
+      } catch(e){
+        localStorage.removeItem(STORAGE_KEY);
+        return false;
+      }
+    }
+
+    let saveTimer = null;
+    function scheduleAutoSave(){
+      window.clearTimeout(saveTimer);
+      saveTimer = window.setTimeout(() => saveCurrentVersion(false), 350);
     }
 
     /***********************
@@ -1272,31 +1445,42 @@
       }
       generatedEntries = deepCopy(initialGeneratedEntries);
       renderCalendarTable();
+      saveCurrentVersion(false);
       toast("Restored the initial generated calendar (without changing blackout dates).");
     });
 
     /***********************
      * Copy / Export       *
      ***********************/
-    function tableToTSV(){
-      const rows = [];
-      rows.push(["Lesson #","Day/Date (Block)","Lesson Title","In-class","Homework"]);
-
+    function groupedLessons(){
+      captureCurrentEdits();
       const lessonMap = new Map();
       generatedEntries.forEach(e => {
         if (!lessonMap.has(e.lessonNum)) lessonMap.set(e.lessonNum, []);
         lessonMap.get(e.lessonNum).push(e);
       });
-
-      const lessonNums = Array.from(lessonMap.keys()).sort((a,b)=>a-b);
-      lessonNums.forEach(ln => {
-        const arr = lessonMap.get(ln).slice().sort((a,b)=>{
+      return Array.from(lessonMap.keys()).sort((a,b)=>a-b).map(ln => {
+        const rows = lessonMap.get(ln).slice().sort((a,b)=>{
           if (a.dateISO !== b.dateISO) return a.dateISO.localeCompare(b.dateISO);
           return a.block.localeCompare(b.block);
         });
-        arr.forEach((e, idx) => {
-          const lessonVal = (idx===0) ? String(ln) : "";
-          rows.push([lessonVal, `${e.displayDate} (${e.block})`, "", "", ""]);
+        return { lessonNum: ln, rows, note: ensureLessonNote(ln) };
+      });
+    }
+
+    function tableToTSV(){
+      const rows = [];
+      rows.push(["Lesson #","Day/Date (Block)","Lesson Title","In-class","Homework"]);
+
+      groupedLessons().forEach(group => {
+        group.rows.forEach((e, idx) => {
+          rows.push([
+            idx === 0 ? String(group.lessonNum) : "",
+            `${e.displayDate} (${e.block})`,
+            idx === 0 ? group.note.title : "",
+            idx === 0 ? group.note.inClass : "",
+            idx === 0 ? group.note.homework : ""
+          ]);
         });
       });
 
@@ -1306,24 +1490,19 @@
     }
 
     function buildStyledTableHTML(){
-      const lessonMap = new Map();
-      generatedEntries.forEach(e => {
-        if (!lessonMap.has(e.lessonNum)) lessonMap.set(e.lessonNum, []);
-        lessonMap.get(e.lessonNum).push(e);
-      });
-      const lessonNums = Array.from(lessonMap.keys()).sort((a,b)=>a-b);
-
+      const groups = groupedLessons();
       const thStyle =
-        "background:#2D68C4;color:#fff;font-weight:700;border:1px solid #000;padding:8px;text-align:left;font-family:Arial,sans-serif;font-size:11px;";
+        "background:#2D68C4;color:#fff;font-weight:700;border:1pt solid #000;padding:4pt;text-align:left;font-family:Garamond,Georgia,serif;font-size:10pt;line-height:1;mso-line-height-rule:exactly;mso-margin-top-alt:0in;mso-margin-bottom-alt:0in;";
       const tdBase =
-        "border:1px solid #000;padding:8px;vertical-align:top;font-family:Arial,sans-serif;font-size:11px;";
+        "border:1pt solid #000;padding:4pt;vertical-align:top;font-family:Garamond,Georgia,serif;font-size:10pt;line-height:1;mso-line-height-rule:exactly;mso-margin-top-alt:0in;mso-margin-bottom-alt:0in;";
       const tdLessonStyle = tdBase + "font-weight:700;white-space:nowrap;";
       const tdWhenStyle = tdBase + "white-space:nowrap;";
       const cellBlue = "background:#B3CDE0;";
       const cellGold = "background:#FBE6C5;";
 
       let html = "";
-      html += `<table style="border-collapse:collapse;width:100%;max-width:900px;">`;
+      html += `<table border="1" cellspacing="0" cellpadding="0" style="border-collapse:collapse;table-layout:fixed;width:7.25in;mso-table-lspace:0pt;mso-table-rspace:0pt;font-family:Garamond,Georgia,serif;">`;
+      html += `<colgroup><col style="width:.65in"><col style="width:1.1in"><col style="width:1.35in"><col style="width:2.35in"><col style="width:1.8in"></colgroup>`;
       html += `<thead><tr>`;
       html += `<th style="${thStyle}">Lesson #</th>`;
       html += `<th style="${thStyle}">Day/Date (Block)</th>`;
@@ -1332,24 +1511,19 @@
       html += `<th style="${thStyle}">Homework</th>`;
       html += `</tr></thead><tbody>`;
 
-      for (const ln of lessonNums){
-        const arr = lessonMap.get(ln).slice().sort((a,b)=>{
-          if (a.dateISO !== b.dateISO) return a.dateISO.localeCompare(b.dateISO);
-          return a.block.localeCompare(b.block);
-        });
-
-        arr.forEach((e, idx) => {
+      for (const group of groups){
+        group.rows.forEach((e, idx) => {
           const bg = (e.week === "blue") ? cellBlue : cellGold;
 
           html += `<tr>`;
           if (idx === 0){
-            html += `<td style="${tdLessonStyle + bg}" rowspan="${arr.length}">${ln}</td>`;
+            html += `<td style="${tdLessonStyle + bg}" rowspan="${group.rows.length}">${group.lessonNum}</td>`;
           }
           html += `<td style="${tdWhenStyle + bg}">${e.displayDate} (${e.block})</td>`;
           if (idx === 0){
-            html += `<td style="${tdBase + bg}" rowspan="${arr.length}"></td>`;
-            html += `<td style="${tdBase + bg}" rowspan="${arr.length}"></td>`;
-            html += `<td style="${tdBase + bg}" rowspan="${arr.length}"></td>`;
+            html += `<td style="${tdBase + bg}" rowspan="${group.rows.length}">${textToWordHTML(group.note.title)}</td>`;
+            html += `<td style="${tdBase + bg}" rowspan="${group.rows.length}">${textToWordHTML(group.note.inClass)}</td>`;
+            html += `<td style="${tdBase + bg}" rowspan="${group.rows.length}">${textToWordHTML(group.note.homework)}</td>`;
           }
           html += `</tr>`;
         });
@@ -1357,6 +1531,28 @@
 
       html += `</tbody></table>`;
       return html;
+    }
+
+    function buildWordDocumentHTML(){
+      const tableHTML = buildStyledTableHTML();
+      return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="ProgId" content="Word.Document">
+  <style>
+    @page WordSection1 { size: 8.5in 11in; margin: .5in .5in .5in .5in; }
+    div.WordSection1 { page: WordSection1; }
+    body, table, td, th { font-family: Garamond, Georgia, serif; font-size: 10pt; line-height: 1; }
+    p { margin-top: 0; margin-bottom: 0; line-height: 1; mso-line-height-rule: exactly; }
+    table { border-collapse: collapse; table-layout: fixed; width: 7.25in; }
+    td, th { border: 1pt solid #000; padding: 4pt; vertical-align: top; }
+  </style>
+</head>
+<body>
+  <div class="WordSection1">${tableHTML}</div>
+</body>
+</html>`;
     }
 
     async function copyHTMLTable(){
@@ -1422,25 +1618,36 @@
         });
     }
 
+    function downloadDoc(){
+      if (!generatedEntries.length){
+        toast("Nothing to download yet. Generate a calendar first.");
+        return;
+      }
+      const blob = new Blob([buildWordDocumentHTML()], { type:"application/msword;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "unit_calendar.doc";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      saveCurrentVersion(false);
+    }
+
     function downloadCSV(){
       const rows = [];
       rows.push(["Lesson #","Day/Date (Block)","Lesson Title","In-class","Homework"]);
 
-      const lessonMap = new Map();
-      generatedEntries.forEach(e => {
-        if (!lessonMap.has(e.lessonNum)) lessonMap.set(e.lessonNum, []);
-        lessonMap.get(e.lessonNum).push(e);
-      });
-
-      const lessonNums = Array.from(lessonMap.keys()).sort((a,b)=>a-b);
-      lessonNums.forEach(ln => {
-        const arr = lessonMap.get(ln).slice().sort((a,b)=>{
-          if (a.dateISO !== b.dateISO) return a.dateISO.localeCompare(b.dateISO);
-          return a.block.localeCompare(b.block);
-        });
-        arr.forEach((e, idx) => {
-          const lessonVal = (idx===0) ? String(ln) : "";
-          rows.push([lessonVal, `${e.displayDate} (${e.block})`, "", "", ""]);
+      groupedLessons().forEach(group => {
+        group.rows.forEach((e, idx) => {
+          rows.push([
+            idx === 0 ? String(group.lessonNum) : "",
+            `${e.displayDate} (${e.block})`,
+            idx === 0 ? group.note.title : "",
+            idx === 0 ? group.note.inClass : "",
+            idx === 0 ? group.note.homework : ""
+          ]);
         });
       });
 
@@ -1461,8 +1668,10 @@
       URL.revokeObjectURL(url);
     }
 
+    saveLocalBtn.addEventListener("click", () => saveCurrentVersion(true));
     copyHtmlBtn.addEventListener("click", copyHTMLTable);
     copyTsvBtn.addEventListener("click", copyTSV);
+    dlDocBtn.addEventListener("click", downloadDoc);
     dlCsvBtn.addEventListener("click", downloadCSV);
 
     /***********************
@@ -1478,7 +1687,16 @@
       if (!cb) return;
       const lab = cb.closest(".blk");
       if (lab) lab.classList.toggle("checked", cb.checked);
+      scheduleAutoSave();
     });
+
+    tbody.addEventListener("input", (e) => {
+      if (!e.target.closest("[data-note-field][data-lesson]")) return;
+      scheduleAutoSave();
+    });
+
+    document.querySelector(".card-bd").addEventListener("change", scheduleAutoSave);
+    loadSavedVersion();
   </script>
 </body>
 </html>
