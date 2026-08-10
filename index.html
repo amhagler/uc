@@ -452,7 +452,7 @@
                 <option value="blue">Blue Week</option>
                 <option value="gold">Gold Week</option>
               </select>
-              <div class="hint">First teaching day uses this week. Weeks then alternate on Mondays.</div>
+              <div class="hint">First teaching day uses this week. Weeks alternate on calendar Mondays, even when Monday is a no-school day.</div>
             </div>
           </div>
 
@@ -1014,32 +1014,24 @@
     const catchupRow = document.getElementById("catchupRow");
 
     function computeWeekForDate(startWeek, startDateISO, dateISO){
-      // First teaching day uses startWeek (no pre-flip),
-      // then flip on each Monday teaching day AFTER generation has started.
-      const startDate = fromISODateUTC(startDateISO);
-      let currentWeek = startWeek;
-      let d = new Date(startDate.getTime());
-      let started = false;
+      // The first actual teaching day uses the selected start week.
+      // After that, blue/gold alternates by calendar week, not by whether
+      // Monday was a teaching day.
+      let firstTeaching = fromISODateUTC(startDateISO);
+      while (!isWeekdayUTC(firstTeaching) || blackoutDates.has(toISODateUTC(firstTeaching))){
+        firstTeaching = nextDayUTC(firstTeaching);
+      }
+
+      let mondayFlips = 0;
+      let d = nextDayUTC(firstTeaching);
 
       while (toISODateUTC(d) <= dateISO){
-        const iso = toISODateUTC(d);
-        const dow = d.getUTCDay();
-
-        const isTeachDay = (dow >= 1 && dow <= 5) && !blackoutDates.has(iso);
-
-        if (isTeachDay){
-          if (!started){
-            started = true;
-          } else if (dow === 1){
-            currentWeek = (currentWeek === "blue") ? "gold" : "blue";
-          }
-        }
-
-        if (iso === dateISO) break;
+        if (d.getUTCDay() === 1) mondayFlips++;
         d = nextDayUTC(d);
       }
 
-      return currentWeek;
+      if (mondayFlips % 2 === 0) return startWeek;
+      return startWeek === "blue" ? "gold" : "blue";
     }
 
     function getScheduleBlocksForDay(week, dateUTC){
