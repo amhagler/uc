@@ -21,18 +21,64 @@
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
       --serif: Garamond, Georgia, "Times New Roman", serif;
+
+      --ui-bg0:#050B16;
+      --ui-bg1:#0B1020;
+      --ui-panel:rgba(8,13,27,.78);
+      --ui-panel2:rgba(255,255,255,.045);
+      --ui-panel3:rgba(216,180,93,.07);
+      --ui-ink:#FFF0D0;
+      --ui-muted:rgba(255,240,208,.68);
+      --ui-line:rgba(216,180,93,.22);
+      --ui-line2:rgba(140,185,255,.16);
+      --ui-accent:#D8B45D;
+      --ui-metal:#8CB9FF;
+      --ui-glow:rgba(216,180,93,.34);
+      --ui-shadow:0 18px 60px rgba(0,0,0,.52), 0 0 0 1px rgba(255,255,255,.045) inset;
     }
 
     *{ box-sizing:border-box; }
     body{
       margin:0;
       padding:18px;
-      background: radial-gradient(900px 420px at 20% 0%, rgba(45,104,196,.12), transparent 60%),
-                  radial-gradient(900px 420px at 85% 18%, rgba(30,79,142,.10), transparent 60%),
-                  var(--bg);
-      color:var(--ink);
+      min-height:100vh;
+      background:
+        linear-gradient(115deg, rgba(216,180,93,.075), transparent 28%),
+        linear-gradient(245deg, rgba(140,185,255,.090), transparent 34%),
+        repeating-linear-gradient(to bottom, rgba(255,255,255,.026), rgba(255,255,255,.026) 1px, transparent 1px, transparent 4px),
+        linear-gradient(180deg, var(--ui-bg0), var(--ui-bg1));
+      color:var(--ui-ink);
       font-family:var(--serif);
       line-height:1;
+    }
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        linear-gradient(90deg, transparent, rgba(216,180,93,.08), transparent),
+        repeating-linear-gradient(115deg, rgba(216,180,93,.035) 0 1px, transparent 1px 42px);
+      opacity:.48;
+      mix-blend-mode:screen;
+      z-index:0;
+    }
+    body::after{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at 18% 24%, rgba(255,240,208,.14) 0 1px, transparent 1.4px),
+        radial-gradient(circle at 72% 16%, rgba(140,185,255,.16) 0 1px, transparent 1.5px),
+        radial-gradient(circle at 86% 74%, rgba(216,180,93,.12) 0 1px, transparent 1.4px);
+      background-size: 190px 150px, 230px 180px, 260px 210px;
+      opacity:.36;
+      z-index:0;
+    }
+    header, .app{
+      position:relative;
+      z-index:1;
     }
 
     header{
@@ -44,15 +90,17 @@
     header h1{
       margin:0;
       font-family:var(--serif);
-      font-weight:700;
-      letter-spacing:.2px;
-      color:var(--brand);
+      font-weight:900;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:var(--ui-ink);
       font-size: 24px;
       line-height:1.1;
+      text-shadow:0 0 18px rgba(216,180,93,.28), 0 1px 0 rgba(255,255,255,.12);
     }
     header p{
       margin:8px 0 0 0;
-      color:var(--muted);
+      color:var(--ui-muted);
       font-size: 13px;
     }
 
@@ -70,29 +118,36 @@
     }
 
     .card{
-      background: var(--panel);
-      border: 1px solid var(--line);
+      background:
+        radial-gradient(420px 160px at 16% 0%, rgba(216,180,93,.12), transparent 70%),
+        linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.020)),
+        var(--ui-panel);
+      border: 1px solid var(--ui-line);
       border-radius: var(--radius);
-      box-shadow: var(--shadow2);
+      box-shadow: var(--ui-shadow);
       overflow:hidden;
+      backdrop-filter: blur(14px);
     }
 
     .card .card-hd{
       padding: 14px 14px 10px 14px;
-      border-bottom: 1px solid var(--line);
-      background: linear-gradient(to bottom, #ffffff, var(--panel2));
+      border-bottom: 1px solid var(--ui-line);
+      background:
+        linear-gradient(90deg, rgba(216,180,93,.13), transparent 42%),
+        linear-gradient(to bottom, rgba(255,255,255,.07), rgba(255,255,255,.018));
     }
     .card .card-hd h2{
       margin:0;
       font-size: 14px;
       letter-spacing:.06em;
       text-transform: uppercase;
-      color: var(--brand);
+      color: var(--ui-accent);
       font-weight: 800;
+      text-shadow:0 0 12px rgba(216,180,93,.25);
     }
     .card .card-hd .sub{
       margin-top:6px;
-      color:var(--muted);
+      color:var(--ui-muted);
       font-size: 12px;
     }
 
@@ -102,7 +157,7 @@
     label{
       display:block;
       font-size: 12px;
-      color: var(--muted);
+      color: var(--ui-muted);
       margin-bottom:6px;
       font-weight: 700;
       letter-spacing:.02em;
@@ -116,20 +171,28 @@
     input[type="date"], input[type="number"], select, textarea{
       width:100%;
       padding: 10px 10px;
-      border: 1px solid var(--line);
+      border: 1px solid rgba(216,180,93,.20);
       border-radius: 12px;
       outline: none;
-      background:#fff;
-      color: var(--ink);
-      transition: box-shadow .15s ease, border-color .15s ease;
+      background: rgba(5,11,22,.66);
+      color: var(--ui-ink);
+      box-shadow:0 0 0 1px rgba(255,255,255,.03) inset;
+      color-scheme: dark;
+      transition: box-shadow .15s ease, border-color .15s ease, background .15s ease;
     }
     input[type="date"]:focus, input[type="number"]:focus, select:focus, textarea:focus{
-      border-color: rgba(45,104,196,.55);
-      box-shadow: 0 0 0 4px rgba(45,104,196,.12);
+      border-color: rgba(216,180,93,.58);
+      background: rgba(8,13,27,.82);
+      box-shadow: 0 0 0 3px rgba(216,180,93,.14), 0 0 18px rgba(216,180,93,.12);
     }
+    select option{
+      background:#0B1020;
+      color:var(--ui-ink);
+    }
+    textarea::placeholder{ color:rgba(255,240,208,.42); }
 
     textarea{
-      min-height: 92px;
+      min-height: 132px;
       resize: vertical;
       font-family: var(--serif);
       font-size: 12px;
@@ -141,8 +204,32 @@
       grid-template-columns: 1fr 1fr;
       gap: 10px;
     }
+    .row3{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
     @media (max-width: 980px){
-      .row2{ grid-template-columns: 1fr; }
+      .row2, .row3{ grid-template-columns: 1fr; }
+    }
+
+    .formSection{
+      border: 1px solid rgba(216,180,93,.16);
+      border-radius: 12px;
+      background:
+        radial-gradient(260px 80px at 18% 0%, rgba(140,185,255,.08), transparent 70%),
+        linear-gradient(180deg, rgba(255,255,255,.046), rgba(255,255,255,.018));
+      padding: 12px;
+      box-shadow:0 0 0 1px rgba(255,255,255,.025) inset;
+    }
+    .formSection + .formSection{ margin-top: 12px; }
+    .sectionTitle{
+      margin: 0 0 10px 0;
+      color: var(--ui-accent);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .06em;
+      text-transform: uppercase;
     }
 
     .seg{
@@ -152,9 +239,9 @@
       align-items: center;
     }
     .seg button{
-      border:1px solid var(--line);
-      background:#fff;
-      color: var(--ink);
+      border:1px solid rgba(216,180,93,.18);
+      background:rgba(255,255,255,.045);
+      color: var(--ui-ink);
       padding: 9px 10px;
       border-radius: 999px;
       cursor:pointer;
@@ -166,9 +253,10 @@
     }
     .seg button:active{ transform: translateY(1px); }
     .seg button.active{
-      border-color: rgba(45,104,196,.55);
-      background: rgba(45,104,196,.10);
-      color: var(--brand2);
+      border-color: rgba(216,180,93,.58);
+      background: linear-gradient(180deg, rgba(216,180,93,.18), rgba(216,180,93,.07));
+      color: var(--ui-ink);
+      box-shadow:0 0 18px rgba(216,180,93,.16), 0 0 0 1px rgba(255,255,255,.06) inset;
     }
 
     .blocks{
@@ -187,20 +275,20 @@
       gap: 8px;
       padding: 9px 8px;
       border-radius: 12px;
-      border: 1px solid var(--line);
-      background:#fff;
+      border: 1px solid rgba(216,180,93,.18);
+      background: rgba(255,255,255,.045);
       cursor:pointer;
       user-select:none;
       transition: border-color .15s ease, box-shadow .15s ease, transform .06s ease, background .15s ease;
       font-weight: 900;
-      color: #0f172a;
+      color: var(--ui-ink);
     }
     .blk input{ display:none; }
     .blk.checked{
-      border-color: rgba(45,104,196,.55);
-      box-shadow: 0 0 0 4px rgba(45,104,196,.12);
-      background: rgba(45,104,196,.08);
-      color: var(--brand2);
+      border-color: rgba(216,180,93,.60);
+      box-shadow: 0 0 0 3px rgba(216,180,93,.13), 0 0 18px rgba(140,185,255,.10);
+      background: linear-gradient(180deg, rgba(216,180,93,.16), rgba(140,185,255,.06));
+      color: var(--ui-ink);
     }
 
     .btnrow{
@@ -210,48 +298,67 @@
     }
 
     button.primary{
-      background: var(--brand);
-      color: #fff;
+      background: linear-gradient(180deg, rgba(255,240,208,.96), rgba(216,180,93,.92));
+      color: #07101f;
       border: none;
       padding: 11px 12px;
       border-radius: 14px;
       cursor:pointer;
       font-weight: 900;
-      box-shadow: var(--shadow2);
+      box-shadow: 0 0 0 1px rgba(255,255,255,.20) inset, 0 12px 24px rgba(0,0,0,.36), 0 0 18px rgba(216,180,93,.18);
       transition: background .15s ease, transform .06s ease;
     }
-    button.primary:hover{ background: var(--brand2); }
+    button.primary:hover{ filter:brightness(1.05) saturate(1.05); }
     button.primary:active{ transform: translateY(1px); }
 
     button.ghost{
-      background:#fff;
-      color: var(--ink);
-      border: 1px solid var(--line);
+      background:rgba(255,255,255,.045);
+      color: var(--ui-ink);
+      border: 1px solid rgba(216,180,93,.18);
       padding: 11px 12px;
       border-radius: 14px;
       cursor:pointer;
       font-weight: 900;
       transition: background .15s ease, border-color .15s ease, transform .06s ease;
     }
-    button.ghost:hover{ background: #f8fafc; }
+    button.ghost:hover{
+      background:rgba(216,180,93,.10);
+      border-color:rgba(216,180,93,.38);
+      box-shadow:0 0 16px rgba(216,180,93,.12);
+    }
     button.ghost:active{ transform: translateY(1px); }
+    label.ghost{
+      background:rgba(255,255,255,.045);
+      color: var(--ui-ink);
+      border: 1px solid rgba(216,180,93,.18);
+      padding: 11px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      font-weight: 900;
+      transition: background .15s ease, border-color .15s ease, transform .06s ease;
+    }
+    label.ghost:hover{
+      background:rgba(216,180,93,.10);
+      border-color:rgba(216,180,93,.38);
+      box-shadow:0 0 16px rgba(216,180,93,.12);
+    }
 
     button.danger{
-      background:#fff;
-      color:#991b1b;
-      border: 1px solid rgba(153,27,27,.22);
+      background:rgba(153,27,27,.10);
+      color:#ffc7c7;
+      border: 1px solid rgba(255,90,90,.30);
       padding: 11px 12px;
       border-radius: 14px;
       cursor:pointer;
       font-weight: 900;
       transition: background .15s ease, border-color .15s ease, transform .06s ease;
     }
-    button.danger:hover{ background: rgba(153,27,27,.06); }
+    button.danger:hover{ background: rgba(153,27,27,.18); border-color:rgba(255,90,90,.46); }
     button.danger:active{ transform: translateY(1px); }
 
     .hint{
       font-size: 12px;
-      color: var(--muted);
+      color: var(--ui-muted);
       margin-top: 4px;
     }
 
@@ -267,16 +374,16 @@
       gap: 8px;
       padding: 7px 10px;
       border-radius: 999px;
-      border: 1px solid var(--line);
-      background: #fff;
+      border: 1px solid rgba(216,180,93,.18);
+      background: rgba(255,255,255,.05);
       font-weight: 800;
       font-size: 12px;
-      color: #0f172a;
+      color: var(--ui-ink);
     }
     .chip code{
       font-family: var(--mono);
       font-size: 11px;
-      color: var(--muted);
+      color: rgba(255,240,208,.62);
       font-weight: 700;
     }
     .chip button{
@@ -286,9 +393,9 @@
       font-size: 16px;
       line-height: 1;
       padding: 0 2px;
-      color: var(--muted);
+      color: rgba(255,240,208,.62);
     }
-    .chip button:hover{ color: #111827; }
+    .chip button:hover{ color: var(--ui-ink); }
 
     /* RIGHT SIDE: TABLE */
     .tableWrap{ padding: 12px 12px 14px 12px; }
@@ -302,10 +409,10 @@
     }
     .tableTop .meta{
       font-size: 12px;
-      color: var(--muted);
+      color: var(--ui-muted);
       line-height:1.25;
     }
-    .tableTop .meta b{ color: #111827; }
+    .tableTop .meta b{ color: var(--ui-ink); }
 
     table{
       width:100%;
@@ -315,6 +422,7 @@
       border-radius: 14px;
       border: 1px solid var(--line);
       background:#fff;
+      color:var(--ink);
     }
     thead th{
       position: sticky;
@@ -347,6 +455,14 @@
 
     .wk-blue td{ background: rgba(179,205,224,.45); }
     .wk-gold td{ background: rgba(251,230,197,.50); }
+    .no-class-row td{
+      background: #f9e6e6;
+      color: #8a1f1f;
+      font-weight: 800;
+      border-top: 1px solid rgba(138,31,31,.25);
+      border-bottom: 1px solid rgba(138,31,31,.25);
+      text-align: center;
+    }
 
     .col-lesson{ width: 70px; font-weight: 900; }
     .col-when{ width: 130px; white-space: nowrap; font-size: 12px; }
@@ -368,11 +484,11 @@
     .notice{
       margin-top: 10px;
       font-size: 12px;
-      color: var(--muted);
+      color: var(--ui-muted);
       padding: 10px 10px;
-      border: 1px dashed rgba(45,104,196,.32);
+      border: 1px dashed rgba(216,180,93,.34);
       border-radius: 14px;
-      background: rgba(45,104,196,.04);
+      background: rgba(216,180,93,.055);
     }
 
     .smallControls{
@@ -383,7 +499,7 @@
 
     .divider{
       height: 1px;
-      background: var(--line);
+      background: linear-gradient(90deg, transparent, rgba(216,180,93,.24), transparent);
       margin: 10px 0;
     }
 
@@ -399,9 +515,9 @@
     .mutedBadge{
       font-size: 11px;
       font-family: var(--serif);
-      color: var(--muted);
-      background: rgba(17,24,39,.04);
-      border: 1px solid var(--line);
+      color: var(--ui-muted);
+      background: rgba(255,255,255,.045);
+      border: 1px solid rgba(216,180,93,.16);
       padding: 6px 10px;
       border-radius: 999px;
     }
@@ -440,23 +556,31 @@
 
       <div class="card-bd">
         <div class="grid">
-          <div class="row2">
-            <div>
-              <label for="start-date">Start date</label>
-              <input type="date" id="start-date" required />
-            </div>
+          <div class="formSection">
+            <div class="sectionTitle">Unit Range</div>
+            <div class="row3">
+              <div>
+                <label for="start-date">Start date</label>
+                <input type="date" id="start-date" required />
+              </div>
 
-            <div>
-              <label for="start-week">Starting week</label>
-              <select id="start-week" required>
-                <option value="blue">Blue Week</option>
-                <option value="gold">Gold Week</option>
-              </select>
-              <div class="hint">First teaching day uses this week. Weeks alternate on calendar Mondays, even when Monday is a no-school day.</div>
-            </div>
-          </div>
+              <div>
+                <label for="start-week">Starting week</label>
+                <select id="start-week" required>
+                  <option value="blue">Blue Week</option>
+                  <option value="gold">Gold Week</option>
+                </select>
+              </div>
 
-          <div>
+              <div>
+                <label for="starting-lesson">Starting lesson #</label>
+                <input type="number" id="starting-lesson" min="1" value="1" />
+              </div>
+            </div>
+            <div class="hint">First teaching day uses this week. Weeks alternate on calendar Mondays, even when Monday is a no-school day.</div>
+
+            <div class="divider"></div>
+
             <label>End rule</label>
             <div class="seg" id="endSeg">
               <button type="button" class="active" data-mode="date">End by Date</button>
@@ -469,7 +593,7 @@
             <div id="end-date-box">
               <label for="end-date">End date</label>
               <input type="date" id="end-date" />
-              <div class="hint">Generates all matching class meetings through this date (skipping blackout dates and weekends).</div>
+              <div class="hint">Generates all matching class meetings through this date.</div>
             </div>
 
             <div id="end-per-block-box" style="display:none;">
@@ -481,70 +605,37 @@
             <div id="end-lessons-box" style="display:none;">
               <label for="lesson-count">Lessons (merged sequence)</label>
               <input type="number" id="lesson-count" min="1" placeholder="e.g., 12" />
-              <div class="hint">Stops when merged Lesson # reaches this value.</div>
+              <div class="hint">Stops when the generated sequence reaches this many lesson groups.</div>
             </div>
           </div>
 
-          <div>
+          <div class="formSection">
+            <div class="sectionTitle">Blocks</div>
             <label>Blocks (A–G)</label>
             <div class="blocks" id="blocks"></div>
-            <div class="hint">Lesson numbering merges the 1st meeting of each selected block into Lesson 1, etc.</div>
+            <div class="hint">Lesson numbering merges the 1st meeting of each selected block into the starting lesson number, etc.</div>
           </div>
 
-          <div class="divider"></div>
-
-          <div class="grid">
+          <div class="formSection">
+            <div class="sectionTitle">No Class Dates</div>
             <div>
-              <label>No School / Blackout dates</label>
-
-              <!-- Single date add -->
-              <div class="row2">
-                <div>
-                  <input type="date" id="blackout-add" />
-                </div>
-                <div class="btnrow">
-                  <button type="button" class="ghost" id="blackout-add-btn">Add date</button>
-                  <button type="button" class="danger" id="blackout-clear-btn">Clear</button>
-                </div>
+              <label for="blackout-paste">Enter one date or range per line</label>
+              <textarea id="blackout-paste" placeholder="9/7&#10;9/7 - Labor Day&#10;3/23-3/27 - Spring Break&#10;2026-10-12 - Conferences"></textarea>
+              <div class="btnrow" style="margin-top:8px;">
+                <button type="button" class="ghost" id="blackout-import-btn">Apply dates</button>
+                <button type="button" class="danger" id="blackout-clear-btn">Clear dates</button>
+                <label class="ghost" style="display:inline-flex;align-items:center;gap:10px;cursor:pointer;">
+                  <input type="file" id="ics-file" accept=".ics" style="display:none;" />
+                  Import .ics
+                </label>
               </div>
-
-              <!-- Range add -->
-              <div style="margin-top:10px;">
-                <label style="margin-bottom:6px;">Add range (weekdays only)</label>
-                <div class="row2">
-                  <div>
-                    <input type="date" id="blackout-range-start" />
-                    <div class="hint" style="margin-top:6px;">Range start</div>
-                  </div>
-                  <div>
-                    <input type="date" id="blackout-range-end" />
-                    <div class="hint" style="margin-top:6px;">Range end</div>
-                  </div>
-                </div>
-                <div class="btnrow" style="margin-top:10px;">
-                  <button type="button" class="ghost" id="blackout-range-btn">Add range</button>
-                </div>
-                <div class="hint">Useful for Spring Break, Thanksgiving week, conference weeks, etc.</div>
-              </div>
-
-              <div class="hint" style="margin-top:10px;">Blackout dates are skipped entirely during generation.</div>
-
+              <div class="hint">No-class dates appear as muted red full-width rows and do not increment lesson numbers. Dates without a year use the start-date year.</div>
               <div class="pillrow" id="blackout-chips"></div>
-
-              <div style="margin-top:10px;">
-                <label for="blackout-paste">Paste dates (comma or newline separated)</label>
-                <textarea id="blackout-paste" placeholder="2026-09-07, 9/16/2026&#10;10/12/2026"></textarea>
-                <div class="btnrow" style="margin-top:8px;">
-                  <button type="button" class="ghost" id="blackout-import-btn">Import pasted dates</button>
-                  <label class="ghost" style="display:inline-flex;align-items:center;gap:10px;cursor:pointer;">
-                    <input type="file" id="ics-file" accept=".ics" style="display:none;" />
-                    Import .ics
-                  </label>
-                </div>
-                <div class="hint">Accepted formats: YYYY-MM-DD, M/D/YYYY, MM/DD/YYYY. Separate by commas and/or new lines.</div>
-              </div>
             </div>
+          </div>
 
+          <div class="formSection">
+            <div class="sectionTitle">Actions</div>
             <div class="btnrow">
               <button type="button" class="primary" id="generate-btn">Generate calendar</button>
               <button type="button" class="ghost" id="restore-btn" style="display:none;">Restore initial</button>
@@ -600,8 +691,8 @@
         </div>
 
         <div class="notice" id="offdaysBox" style="display:none;">
-          <div style="font-weight:900;color:#0f172a;margin-bottom:6px;">Mark off-days (adds to blackout dates)</div>
-          <div style="margin-bottom:8px;color:var(--muted);">
+          <div style="font-weight:900;color:var(--ui-ink);margin-bottom:6px;">Mark off-days (adds to blackout dates)</div>
+          <div style="margin-bottom:8px;color:var(--ui-muted);">
             Check dates that should be skipped. Then click “Apply selected off-days.”
           </div>
           <div id="offdaysList" style="display:grid;gap:6px;"></div>
@@ -640,6 +731,7 @@
      * State              *
      ***********************/
     let blackoutDates = new Set();          // ISO YYYY-MM-DD
+    let blackoutLabels = {};                // ISO -> display reason
     let generatedEntries = [];              // flat meeting entries
     let initialGeneratedEntries = null;     // deep copy for restore
     let currentConfigSnapshot = null;       // for off-days UI
@@ -681,6 +773,10 @@
       if (!Number.isFinite(n)) return null;
       const v = Math.floor(n);
       return v >= 1 ? v : null;
+    }
+
+    function getStartingLessonNumber(){
+      return clampInt(parseFloat(document.getElementById("starting-lesson").value)) || 1;
     }
 
     function deepCopy(obj){
@@ -751,10 +847,17 @@
     /******************************
      * Multi-format date parsing  *
      ******************************/
-    function parseFlexibleDateToken(token){
+    function getDefaultYear(){
+      const startISO = document.getElementById("start-date")?.value || "";
+      if (/^\d{4}-\d{2}-\d{2}$/.test(startISO)) return Number(startISO.slice(0,4));
+      return new Date().getFullYear();
+    }
+
+    function parseFlexibleDateToken(token, defaultYear = getDefaultYear()){
       // Accept:
       // - YYYY-MM-DD
       // - M/D/YYYY or MM/DD/YYYY
+      // - M/D or MM/DD, using the start-date year
       // Returns ISO YYYY-MM-DD or null
       const t = token.trim();
       if (!t) return null;
@@ -780,15 +883,65 @@
         return iso;
       }
 
+      // M/D
+      const short = t.match(/^(\d{1,2})\/(\d{1,2})$/);
+      if (short){
+        const mm = Number(short[1]);
+        const dd = Number(short[2]);
+        const yy = Number(defaultYear);
+        if (mm < 1 || mm > 12 || dd < 1 || dd > 31) return null;
+        const iso = `${yy}-${pad2(mm)}-${pad2(dd)}`;
+        const d = fromISODateUTC(iso);
+        if (d.getUTCFullYear() !== yy || (d.getUTCMonth()+1) !== mm || d.getUTCDate() !== dd) return null;
+        return iso;
+      }
+
       return null;
     }
 
-    function tokenizeDateList(text){
-      // Split by commas and/or newlines
-      return text
-        .split(/[\n,]+/g)
-        .map(s => s.trim())
-        .filter(Boolean);
+    function expandDateRange(startISO, endISO){
+      const dates = [];
+      let d = fromISODateUTC(startISO);
+      const end = fromISODateUTC(endISO);
+      if (toISODateUTC(end) < toISODateUTC(d)) return dates;
+      while (toISODateUTC(d) <= toISODateUTC(end)){
+        if (isWeekdayUTC(d)) dates.push(toISODateUTC(d));
+        d = nextDayUTC(d);
+      }
+      return dates;
+    }
+
+    function parseBlackoutLine(line){
+      const raw = line.trim();
+      if (!raw) return { dates: [], label: "No Class", error: false };
+
+      const defaultYear = getDefaultYear();
+      let datePart = raw;
+      let label = "No Class";
+      const labeled = raw.match(/^(.+?)\s+-\s+(.+)$/);
+      if (labeled){
+        datePart = labeled[1].trim();
+        label = labeled[2].trim() || "No Class";
+      }
+
+      const single = parseFlexibleDateToken(datePart, defaultYear);
+      if (single) return { dates: [single], label, error: false };
+
+      const range = datePart.match(/^(.+?)\s*(?:-|to|through)\s*(.+)$/i);
+      if (range){
+        const startISO = parseFlexibleDateToken(range[1].trim(), defaultYear);
+        const endISO = parseFlexibleDateToken(range[2].trim(), defaultYear);
+        if (startISO && endISO){
+          return { dates: expandDateRange(startISO, endISO), label, error: false };
+        }
+      }
+
+      return { dates: [], label, error: true };
+    }
+
+    function formatNoClassLabel(iso){
+      const d = fromISODateUTC(iso);
+      return `${monthDayUTC(d)} - ${blackoutLabels[iso] || "No Class"}`;
     }
 
     /***********************
@@ -855,14 +1008,8 @@
     /***********************
      * Blackout dates UI   *
      ***********************/
-    const blackoutAdd = document.getElementById("blackout-add");
-    const blackoutAddBtn = document.getElementById("blackout-add-btn");
     const blackoutClearBtn = document.getElementById("blackout-clear-btn");
     const blackoutChips = document.getElementById("blackout-chips");
-
-    const blackoutRangeStart = document.getElementById("blackout-range-start");
-    const blackoutRangeEnd = document.getElementById("blackout-range-end");
-    const blackoutRangeBtn = document.getElementById("blackout-range-btn");
 
     const blackoutPaste = document.getElementById("blackout-paste");
     const blackoutImportBtn = document.getElementById("blackout-import-btn");
@@ -876,93 +1023,60 @@
       arr.forEach(iso => {
         const chip = document.createElement("span");
         chip.className = "chip";
-        chip.innerHTML = `<span>No school</span> <code>${iso}</code>`;
+        chip.innerHTML = `<span>${escapeHTML(blackoutLabels[iso] || "No Class")}</span> <code>${iso}</code>`;
         const x = document.createElement("button");
         x.type = "button";
         x.title = "Remove";
         x.textContent = "×";
         x.addEventListener("click", () => {
           blackoutDates.delete(iso);
+          delete blackoutLabels[iso];
           renderBlackoutChips();
+          scheduleAutoSave();
         });
         chip.appendChild(x);
         blackoutChips.appendChild(chip);
       });
     }
 
-    function addBlackoutISO(iso){
+    function addBlackoutISO(iso, label = "No Class"){
       if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
       const d = fromISODateUTC(iso);
       if (isNaN(d.getTime())) return false;
       blackoutDates.add(iso);
+      if (!blackoutLabels[iso] || (label && label !== "No Class")){
+        blackoutLabels[iso] = label || "No Class";
+      }
       return true;
     }
 
-    function addBlackoutRange(startISO, endISO){
-      if (!startISO || !endISO) return { added: 0, error: "Please enter both range start and range end." };
-      if (endISO < startISO) return { added: 0, error: "Range end must be on or after range start." };
-
-      let added = 0;
-      let d = fromISODateUTC(startISO);
-      const end = fromISODateUTC(endISO);
-
-      while (toISODateUTC(d) <= toISODateUTC(end)){
-        if (isWeekdayUTC(d)){
-          const iso = toISODateUTC(d);
-          if (!blackoutDates.has(iso)){
-            blackoutDates.add(iso);
-            added++;
-          }
-        }
-        d = nextDayUTC(d);
-      }
-
-      return { added, error: null };
-    }
-
-    blackoutAddBtn.addEventListener("click", () => {
-      const iso = blackoutAdd.value;
-      if (!iso){ toast("Pick a date to add."); return; }
-      addBlackoutISO(iso);
-      blackoutAdd.value = "";
-      renderBlackoutChips();
-    });
-
-    blackoutRangeBtn.addEventListener("click", () => {
-      const s = blackoutRangeStart.value;
-      const e = blackoutRangeEnd.value;
-      const res = addBlackoutRange(s, e);
-      if (res.error){ toast(res.error); return; }
-      renderBlackoutChips();
-      toast(`Added ${res.added} weekday blackout date(s) from range.`);
-      blackoutRangeStart.value = "";
-      blackoutRangeEnd.value = "";
-    });
-
     blackoutClearBtn.addEventListener("click", () => {
       blackoutDates = new Set();
+      blackoutLabels = {};
       renderBlackoutChips();
+      saveCurrentVersion(false);
     });
 
     blackoutImportBtn.addEventListener("click", () => {
-      const tokens = tokenizeDateList(blackoutPaste.value);
-      if (!tokens.length){
-        toast("Paste some dates first.");
+      const lines = blackoutPaste.value.split(/\r?\n/g).map(s => s.trim()).filter(Boolean);
+      if (!lines.length){
+        toast("Enter at least one no-class date first.");
         return;
       }
 
       let ok = 0, bad = 0;
-      tokens.forEach(tok => {
-        const iso = parseFlexibleDateToken(tok);
-        if (!iso){ bad++; return; }
-        if (!blackoutDates.has(iso)){
-          blackoutDates.add(iso);
-          ok++;
-        }
+      lines.forEach(line => {
+        const parsed = parseBlackoutLine(line);
+        if (parsed.error || !parsed.dates.length){ bad++; return; }
+        parsed.dates.forEach(iso => {
+          if (!blackoutDates.has(iso)) ok++;
+          addBlackoutISO(iso, parsed.label);
+        });
       });
 
       renderBlackoutChips();
-      toast(`Imported ${ok} date(s)` + (bad ? `; skipped ${bad} invalid.` : "."));
+      saveCurrentVersion(false);
+      toast(`Applied ${ok} no-class date(s)` + (bad ? `; skipped ${bad} invalid line(s).` : "."));
     });
 
     // Minimal .ics import: collect DTSTART lines (all-day dates typically appear as DTSTART;VALUE=DATE:YYYYMMDD)
@@ -983,7 +1097,7 @@
         const iso = `${y}-${mo}-${d}`;
         // Add only if it's a weekday (since tool is weekday-skipping anyway and you requested weekday-only for ranges)
         const dd = fromISODateUTC(iso);
-        if (isWeekdayUTC(dd) && addBlackoutISO(iso)) found++;
+        if (isWeekdayUTC(dd) && addBlackoutISO(iso, "No Class")) found++;
       }
       renderBlackoutChips();
       toast(found ? `Imported ${found} blackout weekday date(s) from .ics.` : "No valid weekday DTSTART dates found in that .ics.");
@@ -1044,6 +1158,7 @@
       captureCurrentEdits();
       const startISO = document.getElementById("start-date").value;
       const startWeek = document.getElementById("start-week").value;
+      const startingLesson = getStartingLessonNumber();
 
       if (!startISO){
         toast("Please enter a start date.");
@@ -1114,7 +1229,14 @@
 
         const iso = toISODateUTC(d);
 
-        if (isWeekdayUTC(d) && !blackoutDates.has(iso)){
+        if (isWeekdayUTC(d) && blackoutDates.has(iso)){
+          generatedEntries.push({
+            type: "no-class",
+            dateISO: iso,
+            displayDate: monthDayUTC(d),
+            label: blackoutLabels[iso] || "No Class"
+          });
+        } else if (isWeekdayUTC(d)){
           const week = computeWeekForDate(startWeek, startISO, iso);
           const todaysSchedule = getScheduleBlocksForDay(week, d);
 
@@ -1125,8 +1247,9 @@
 
             blockMeetCount[block]++;
 
-            const lessonNum = blockMeetCount[block];
-            if (endMode === "lessons" && lessonNum > mergedLessonsTarget) return;
+            const internalLessonNum = blockMeetCount[block];
+            if (endMode === "lessons" && internalLessonNum > mergedLessonsTarget) return;
+            const lessonNum = startingLesson + internalLessonNum - 1;
 
             generatedEntries.push({
               type: "class",
@@ -1134,6 +1257,7 @@
               displayDate: `${dayShortUTC(d)} ${monthDayUTC(d)}`,
               week,
               block,
+              internalLessonNum,
               lessonNum
             });
           });
@@ -1143,6 +1267,13 @@
       }
 
       generatedEntries.sort((a,b) => {
+        if (a.type !== b.type){
+          if (a.dateISO !== b.dateISO) return a.dateISO.localeCompare(b.dateISO);
+          return a.type === "no-class" ? -1 : 1;
+        }
+        if (a.type === "no-class"){
+          return a.dateISO.localeCompare(b.dateISO);
+        }
         if (a.lessonNum !== b.lessonNum) return a.lessonNum - b.lessonNum;
         if (a.dateISO !== b.dateISO) return a.dateISO.localeCompare(b.dateISO);
         return a.block.localeCompare(b.block);
@@ -1150,7 +1281,7 @@
 
       initialGeneratedEntries = deepCopy(generatedEntries);
       currentConfigSnapshot = {
-        startISO, startWeek, endMode, endISO, perBlockCount, mergedLessonsTarget,
+        startISO, startWeek, startingLesson, endMode, endISO, perBlockCount, mergedLessonsTarget,
         selectedBlocks: [...selectedBlocks]
       };
 
@@ -1166,6 +1297,47 @@
      ***********************/
     const tbody = document.querySelector("#unit-calendar tbody");
 
+    function buildDisplayGroups(){
+      const lessonMap = new Map();
+      const noClassRows = [];
+
+      for (const e of generatedEntries){
+        if (e.type === "no-class"){
+          noClassRows.push(e);
+        } else {
+          if (!lessonMap.has(e.lessonNum)) lessonMap.set(e.lessonNum, []);
+          lessonMap.get(e.lessonNum).push(e);
+        }
+      }
+
+      const lessonGroups = Array.from(lessonMap.keys()).sort((a,b)=>a-b).map(lessonNum => {
+        const rows = lessonMap.get(lessonNum).slice().sort((a,b)=>{
+          if (a.dateISO !== b.dateISO) return a.dateISO.localeCompare(b.dateISO);
+          return a.block.localeCompare(b.block);
+        });
+        return { type: "lesson", lessonNum, rows, sortISO: rows[0]?.dateISO || "" };
+      });
+
+      const sortedNoClass = noClassRows.slice().sort((a,b)=>a.dateISO.localeCompare(b.dateISO));
+      const display = [];
+      let offIdx = 0;
+
+      lessonGroups.forEach(group => {
+        while (offIdx < sortedNoClass.length && sortedNoClass[offIdx].dateISO <= group.sortISO){
+          display.push({ type: "no-class", entry: sortedNoClass[offIdx] });
+          offIdx++;
+        }
+        display.push(group);
+      });
+
+      while (offIdx < sortedNoClass.length){
+        display.push({ type: "no-class", entry: sortedNoClass[offIdx] });
+        offIdx++;
+      }
+
+      return display;
+    }
+
     function renderCalendarTable(){
       tbody.innerHTML = "";
 
@@ -1180,16 +1352,20 @@
         return;
       }
 
-      const groups = new Map();
-      for (const e of generatedEntries){
-        if (!groups.has(e.lessonNum)) groups.set(e.lessonNum, []);
-        groups.get(e.lessonNum).push(e);
-      }
+      buildDisplayGroups().forEach(group => {
+        if (group.type === "no-class"){
+          const tr = document.createElement("tr");
+          tr.className = "no-class-row";
+          const td = document.createElement("td");
+          td.colSpan = 5;
+          td.textContent = formatNoClassLabel(group.entry.dateISO);
+          tr.appendChild(td);
+          tbody.appendChild(tr);
+          return;
+        }
 
-      const lessonNums = Array.from(groups.keys()).sort((a,b)=>a-b);
-
-      lessonNums.forEach(lessonNum => {
-        const rows = groups.get(lessonNum);
+        const lessonNum = group.lessonNum;
+        const rows = group.rows;
 
         rows.forEach((entry, idx) => {
           const tr = document.createElement("tr");
@@ -1240,7 +1416,7 @@
         return;
       }
 
-      const { startISO, startWeek, endMode, endISO, perBlockCount, mergedLessonsTarget, selectedBlocks } = currentConfigSnapshot;
+      const { startISO, startWeek, startingLesson, endMode, endISO, perBlockCount, mergedLessonsTarget, selectedBlocks } = currentConfigSnapshot;
 
       const endDesc =
         endMode === "date" ? `End by date: <b>${endISO}</b>` :
@@ -1252,16 +1428,18 @@
 
       meta.innerHTML = `
         <div><b>Status:</b> Generated.</div>
-        <div>Start: <b>${startISO}</b> • Starting week: <b>${startWeek.toUpperCase()}</b></div>
+        <div>Start: <b>${startISO}</b> • Starting week: <b>${startWeek.toUpperCase()}</b> • First lesson: <b>${startingLesson || 1}</b></div>
         <div>${endDesc}</div>
         <div>Blocks: <b>${selectedBlocks.join(", ")}</b> • ${blkDesc}</div>
       `;
 
-      const lessons = new Set(generatedEntries.map(e => e.lessonNum));
-      const dates = new Set(generatedEntries.map(e => e.dateISO));
-      const entriesCount = generatedEntries.length;
+      const classEntries = generatedEntries.filter(e => e.type !== "no-class");
+      const noClassEntries = generatedEntries.filter(e => e.type === "no-class");
+      const lessons = new Set(classEntries.map(e => e.lessonNum));
+      const dates = new Set(classEntries.map(e => e.dateISO));
+      const entriesCount = classEntries.length;
 
-      counts.textContent = `Lessons: ${lessons.size} • Teaching dates: ${dates.size} • Meetings listed: ${entriesCount}`;
+      counts.textContent = `Lessons: ${lessons.size} • Teaching dates: ${dates.size} • Meetings listed: ${entriesCount} • No-class rows: ${noClassEntries.length}`;
       show(counts);
     }
 
@@ -1295,6 +1473,7 @@
       window.clearTimeout(saveTimer);
       localStorage.removeItem(STORAGE_KEY);
       blackoutDates = new Set();
+      blackoutLabels = {};
       generatedEntries = [];
       initialGeneratedEntries = null;
       currentConfigSnapshot = null;
@@ -1302,12 +1481,10 @@
 
       document.getElementById("start-date").value = "";
       document.getElementById("start-week").value = "blue";
+      document.getElementById("starting-lesson").value = "1";
       document.getElementById("end-date").value = "";
       document.getElementById("class-count").value = "";
       document.getElementById("lesson-count").value = "";
-      blackoutAdd.value = "";
-      blackoutRangeStart.value = "";
-      blackoutRangeEnd.value = "";
       blackoutPaste.value = "";
       if (icsFile) icsFile.value = "";
 
@@ -1330,12 +1507,14 @@
       return {
         startISO: document.getElementById("start-date").value,
         startWeek: document.getElementById("start-week").value,
+        startingLesson: document.getElementById("starting-lesson").value || "1",
         endMode,
         endISO: document.getElementById("end-date").value,
         perBlockCount: document.getElementById("class-count").value,
         mergedLessonsTarget: document.getElementById("lesson-count").value,
         selectedBlocks: getSelectedBlocks(),
-        blackoutDates: uniqSortedISO(blackoutDates)
+        blackoutDates: uniqSortedISO(blackoutDates),
+        blackoutLabels
       };
     }
 
@@ -1365,6 +1544,7 @@
       if (!form) return;
       document.getElementById("start-date").value = form.startISO || "";
       document.getElementById("start-week").value = form.startWeek || "blue";
+      document.getElementById("starting-lesson").value = form.startingLesson || "1";
       document.getElementById("end-date").value = form.endISO || "";
       document.getElementById("class-count").value = form.perBlockCount || "";
       document.getElementById("lesson-count").value = form.mergedLessonsTarget || "";
@@ -1377,6 +1557,7 @@
       });
 
       blackoutDates = new Set(form.blackoutDates || []);
+      blackoutLabels = form.blackoutLabels || {};
       renderBlackoutChips();
     }
 
@@ -1413,7 +1594,7 @@
      * Off-days from list  *
      ***********************/
     function buildOffdaysListFromGenerated(){
-      const uniqDates = Array.from(new Set(generatedEntries.map(e => e.dateISO))).sort((a,b)=>a.localeCompare(b));
+      const uniqDates = Array.from(new Set(generatedEntries.filter(e => e.type !== "no-class").map(e => e.dateISO))).sort((a,b)=>a.localeCompare(b));
       offdaysList.innerHTML = "";
 
       if (!uniqDates.length){
@@ -1430,9 +1611,9 @@
         row.style.alignItems = "center";
         row.style.gap = "10px";
         row.style.padding = "6px 8px";
-        row.style.border = "1px solid var(--line)";
+        row.style.border = "1px solid rgba(216,180,93,.18)";
         row.style.borderRadius = "12px";
-        row.style.background = "#fff";
+        row.style.background = "rgba(255,255,255,.045)";
         row.style.cursor = "pointer";
 
         const cb = document.createElement("input");
@@ -1443,7 +1624,7 @@
         span.textContent = label;
         span.style.fontFamily = "var(--mono)";
         span.style.fontSize = "12px";
-        span.style.color = "var(--ink)";
+        span.style.color = "var(--ui-ink)";
         span.style.fontWeight = "800";
 
         row.appendChild(cb);
@@ -1468,7 +1649,7 @@
       checked.forEach(cb => {
         const iso = cb.dataset.iso;
         if (!blackoutDates.has(iso)){
-          blackoutDates.add(iso);
+          addBlackoutISO(iso, "No Class");
           added++;
         }
       });
@@ -1496,17 +1677,9 @@
      ***********************/
     function groupedLessons(){
       captureCurrentEdits();
-      const lessonMap = new Map();
-      generatedEntries.forEach(e => {
-        if (!lessonMap.has(e.lessonNum)) lessonMap.set(e.lessonNum, []);
-        lessonMap.get(e.lessonNum).push(e);
-      });
-      return Array.from(lessonMap.keys()).sort((a,b)=>a-b).map(ln => {
-        const rows = lessonMap.get(ln).slice().sort((a,b)=>{
-          if (a.dateISO !== b.dateISO) return a.dateISO.localeCompare(b.dateISO);
-          return a.block.localeCompare(b.block);
-        });
-        return { lessonNum: ln, rows, note: ensureLessonNote(ln) };
+      return buildDisplayGroups().map(group => {
+        if (group.type === "no-class") return group;
+        return { ...group, note: ensureLessonNote(group.lessonNum) };
       });
     }
 
@@ -1515,6 +1688,10 @@
       rows.push(["Lesson #","Day/Date (Block)","Lesson Title","In-class","Homework"]);
 
       groupedLessons().forEach(group => {
+        if (group.type === "no-class"){
+          rows.push(["", formatNoClassLabel(group.entry.dateISO), "", "", ""]);
+          return;
+        }
         group.rows.forEach((e, idx) => {
           rows.push([
             idx === 0 ? String(group.lessonNum) : "",
@@ -1543,6 +1720,7 @@
       const tdWhenStyle = tdBase + "white-space:nowrap;";
       const cellBlue = "background:#B3CDE0;";
       const cellGold = "background:#FBE6C5;";
+      const cellNoClass = "background:#F9E6E6;color:#8A1F1F;font-weight:700;text-align:center;";
 
       let html = "";
       html += `<table border="1" cellspacing="0" cellpadding="0" style="border-collapse:collapse;table-layout:fixed;width:7.25in;mso-table-lspace:0pt;mso-table-rspace:0pt;${wordFontFace}">`;
@@ -1556,6 +1734,10 @@
       html += `</tr></thead><tbody>`;
 
       for (const group of groups){
+        if (group.type === "no-class"){
+          html += `<tr><td colspan="5" style="${tdBase + cellNoClass}"><p class="MsoNormal" style="${wordPara}${wordFontFace}font-size:10pt;font-weight:700;">${escapeHTML(formatNoClassLabel(group.entry.dateISO))}</p></td></tr>`;
+          continue;
+        }
         group.rows.forEach((e, idx) => {
           const bg = (e.week === "blue") ? cellBlue : cellGold;
 
@@ -1684,6 +1866,10 @@
       rows.push(["Lesson #","Day/Date (Block)","Lesson Title","In-class","Homework"]);
 
       groupedLessons().forEach(group => {
+        if (group.type === "no-class"){
+          rows.push(["", formatNoClassLabel(group.entry.dateISO), "", "", ""]);
+          return;
+        }
         group.rows.forEach((e, idx) => {
           rows.push([
             idx === 0 ? String(group.lessonNum) : "",
